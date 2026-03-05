@@ -1,14 +1,22 @@
 import requests
 import json
+import os
+import dotenv
 
-API_KEY = "719dbca34c89cfae4ffee282f39bab21"  # Ganti dengan kodemu dari Langkah 1
+dotenv.load_dotenv()
+
+API_KEY = os.getenv("API_KEY")
+print(API_KEY)
 BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 
 # Koordinat Puncak Gunung Lawu
 titik_puncak = {
-    "nama": "Puncak Hargo Dumilah",
-    "lat": -7.6278,
-    "lon": 111.1970
+    "nama": "Lokasi pada lat dan long",
+    "lat": -10.525092,
+    "lon": 105.652855
+
+    #-10.525092, 105.652855
+
 }
 
 print(f"Mengirim permintaan data cuaca untuk {titik_puncak['nama']}...")

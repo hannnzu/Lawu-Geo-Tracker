@@ -1,0 +1,15 @@
+timestamp,nama_pos,lat,lon,elevasi_mdpl,suhu_celsius,kelembaban_persen,kecepatan_angin_ms,kondisi_cuaca
+2026-03-05 14:10:13,Basecamp Cemoro Sewu,-7.663901,111.191535,1915,14.24,82,5.23,awan mendung
+2026-03-05 14:10:13,Basecamp Candi Ceto,-7.59508,111.157188,1466,22.31,81,5.08,awan mendung
+2026-03-05 14:10:13,Basecamp Cemoro Kandang,-7.66316,111.18717,1912.6,14.24,82,5.23,awan mendung
+2026-03-05 14:10:13,Pos 3 Cemoro Sewu,-7.63531,111.18449,2887.6,13.66,82,5.24,awan mendung
+2026-03-05 14:10:13,Pos 3 Candi Ceto,-7.602822,111.177754,2163.1,22.31,81,5.08,awan mendung
+2026-03-05 14:10:13,Pos 3 Cemoro Kandang,-7.63529,111.1845,2889.2,13.66,82,5.24,awan mendung
+2026-03-05 14:10:13,Hargo Dumilah,-7.627324,111.194387,3256.2,13.66,82,5.24,awan mendung
+2026-03-05 14:20:17,Basecamp Cemoro Sewu,-7.663901,111.191535,1915,13.86,82,5.23,awan mendung
+2026-03-05 14:20:17,Basecamp Candi Ceto,-7.59508,111.157188,1466,21.94,81,5.08,awan mendung
+2026-03-05 14:20:17,Basecamp Cemoro Kandang,-7.66316,111.18717,1912.6,13.86,82,5.23,awan mendung
+2026-03-05 14:20:17,Pos 3 Cemoro Sewu,-7.63531,111.18449,2887.6,13.29,81,5.24,awan mendung
+2026-03-05 14:20:17,Pos 3 Candi Ceto,-7.602822,111.177754,2163.1,21.94,81,5.08,awan mendung
+2026-03-05 14:20:17,Pos 3 Cemoro Kandang,-7.63529,111.1845,2889.2,13.29,81,5.24,awan mendung
+2026-03-05 14:20:17,Hargo Dumilah,-7.627324,111.194387,3256.2,13.29,81,5.24,awan mendung
