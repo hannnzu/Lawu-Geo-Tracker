@@ -12,10 +12,10 @@ BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 # Koordinat Puncak Gunung Lawu
 titik_puncak = {
     "nama": "Lokasi pada lat dan long",
-    "lat": -10.525092,
-    "lon": 105.652855
+    "lat": -5.331952,
+    "lon": 104.794325
 
-    #-10.525092, 105.652855
+    #-5.331952, 104.794325
 
 }
 
