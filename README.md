@@ -107,7 +107,7 @@
 **Source Details**
 *   **API Name**: OpenWeatherMap Current Weather Data API
 *   **Endpoint URL**: [api.openweathermap.org/data/2.5/weather](http://api.openweathermap.org/data/2.5/weather)
-*   **Provider**: OpenWeather Ltd
+*   **Provider**: OpenWeather Ltd.
 *   **Authentication Method**: API Key
 
 **API Analysis**
