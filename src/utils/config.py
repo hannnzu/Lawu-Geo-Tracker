@@ -2,14 +2,16 @@
 utils/config.py
 ----------------
 Memuat konfigurasi dari environment variables dan file config/.
-Open-Meteo Archive API tidak membutuhkan API Key.
+Mencakup parameter untuk:
+  - Open-Meteo Archive API (cuaca historis, tanpa API Key)
+  - NASA FIRMS API (data kebakaran hutan, butuh MAP_KEY gratis)
 """
 
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Muat .env untuk parameter opsional (WEATHER_START_DATE, WEATHER_END_DATE)
+# Muat .env untuk semua parameter pipeline
 load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
 
 
@@ -29,6 +31,14 @@ class Config:
     WEATHER_HISTORICAL_START: str = os.getenv("WEATHER_START_DATE", "2021-01-01")
     WEATHER_HISTORICAL_END:   str = os.getenv("WEATHER_END_DATE",   "2025-12-31")
 
-    # --- Koordinat Referensi Gunung Lawu ---
+    # --- Koordinat & Bounding Box Gunung Lawu ---
     LAWU_PUNCAK_LAT: float = -7.627324
     LAWU_PUNCAK_LON: float = 111.194387
+    # Bounding box format: "west,south,east,north" (untuk NASA FIRMS)
+    LAWU_BBOX:       str   = "111.10,-7.75,111.25,-7.55"
+
+    # --- Parameter Pipeline Bencana Alam (NASA FIRMS) ---
+    # MAP_KEY gratis: https://firms.modaps.eosdis.nasa.gov/api/map_key/
+    FIRMS_MAP_KEY:    str = os.getenv("FIRMS_MAP_KEY",    "")
+    FIRMS_START_DATE: str = os.getenv("FIRMS_START_DATE", "2021-01-01")
+    FIRMS_END_DATE:   str = os.getenv("FIRMS_END_DATE",   "2025-12-31")
