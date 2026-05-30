@@ -42,3 +42,6 @@ class Config:
     FIRMS_MAP_KEY:    str = os.getenv("FIRMS_MAP_KEY",    "")
     FIRMS_START_DATE: str = os.getenv("FIRMS_START_DATE", "2021-01-01")
     FIRMS_END_DATE:   str = os.getenv("FIRMS_END_DATE",   "2025-12-31")
+
+    # --- Database (Aiven PostgreSQL + TimescaleDB) ---
+    AIVEN_DATABASE_URL: str = os.getenv("AIVEN_DATABASE_URL", "")
