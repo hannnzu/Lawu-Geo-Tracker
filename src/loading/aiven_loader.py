@@ -313,7 +313,7 @@ def load_cuaca_integrated(engine, csv_path: Path) -> int:
 
 def load_jalur_pendakian(engine, points: list[dict]) -> int:
     """
-    Memuat data jalur pendakian ke database Aiven PostgreSQL.
+    Memuat data jalur pendakian ke database Aiven PostgreSQL menggunakan COPY untuk performa maksimal.
     Sebelum memuat, data lama akan dihapus (TRUNCATE) untuk menghindari duplikasi.
     """
     logger.info("Menghapus data lama di 'jalur_pendakian'...")
@@ -325,23 +325,54 @@ def load_jalur_pendakian(engine, points: list[dict]) -> int:
         logger.warning("Tidak ada data titik jalur yang akan dimuat.")
         return 0
 
-    logger.info(f"Memulai pemuatan {len(points)} titik jalur ke 'jalur_pendakian'...")
-    query = text("""
-        INSERT INTO jalur_pendakian (
-            nama_jalur, urutan_titik, lat, lon, elevasi_mdpl,
-            kemiringan_pct, jarak_dari_basecamp_km, akumulasi_gain_m,
-            sumber_file, terrain_type
-        ) VALUES (
-            :nama_jalur, :urutan_titik, :lat, :lon, :elevasi_mdpl,
-            :kemiringan_pct, :jarak_dari_basecamp_km, :akumulasi_gain_m,
-            :sumber_file, :terrain_type
-        );
-    """)
+    logger.info(f"Memulai bulk load {len(points)} titik ke 'jalur_pendakian' via COPY...")
+    
+    # Buat buffer CSV di memori
+    f = io.StringIO()
+    writer = csv.writer(f)
+    # Tulis header
+    writer.writerow([
+        "nama_jalur", "urutan_titik", "lat", "lon", "elevasi_mdpl",
+        "kemiringan_pct", "jarak_dari_basecamp_km", "akumulasi_gain_m",
+        "sumber_file", "terrain_type"
+    ])
+    
+    # Tulis data
+    for pt in points:
+        writer.writerow([
+            pt["nama_jalur"],
+            pt["urutan_titik"],
+            pt["lat"],
+            pt["lon"],
+            pt["elevasi_mdpl"],
+            pt["kemiringan_pct"],
+            pt["jarak_dari_basecamp_km"],
+            pt["akumulasi_gain_m"],
+            pt["sumber_file"],
+            pt["terrain_type"]
+        ])
+        
+    f.seek(0)
     
     start_time = time.time()
-    with engine.connect() as conn:
-        conn.execute(query, points)
-        conn.commit()
+    raw_conn = engine.raw_connection()
+    try:
+        with raw_conn.cursor() as cur:
+            copy_sql = """
+                COPY jalur_pendakian (
+                    nama_jalur, urutan_titik, lat, lon, elevasi_mdpl,
+                    kemiringan_pct, jarak_dari_basecamp_km, akumulasi_gain_m,
+                    sumber_file, terrain_type
+                ) FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '');
+            """
+            cur.copy_expert(sql=copy_sql, file=f)
+        raw_conn.commit()
+    except Exception as e:
+        raw_conn.rollback()
+        logger.error(f"Gagal memuat jalur_pendakian: {e}")
+        raise e
+    finally:
+        raw_conn.close()
         
     duration = time.time() - start_time
     logger.info(f"Berhasil memuat {len(points)} titik ke 'jalur_pendakian' dalam {duration:.2f} detik.")
