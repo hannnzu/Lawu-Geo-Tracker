@@ -35,11 +35,17 @@ def hitung_danger_level(
     # Hujan deras (> 20mm/jam) bahaya banjir/longsor, (> 10mm/jam) waspada.
     r3 = 2 if curah_hujan_mm > 20.0 else (1 if curah_hujan_mm > 10.0 else 0)
 
-    # 4. Aturan Jarak Pandang
-    # Jarak pandang sangat buruk (< 200m) bahaya tersesat, (< 500m) waspada.
-    # Jika bernilai NULL/None, asumsikan waspada (1) karena kemungkinan data hilang akibat kabut.
+    # 4. Aturan Jarak Pandang (Skenario C - Proxy WMO jika NULL)
+    # Jika bernilai NULL/None, diestimasi dari kode WMO:
+    # WMO 45, 48 = Kabut (Level 2)
+    # WMO 51-67, 80-82 = Hujan/Gerimis/Showers (Level 1)
     if jarak_pandang_m is None:
-        r4 = 1
+        if kode_cuaca_wmo in (45, 48):
+            r4 = 2
+        elif kode_cuaca_wmo in (51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82):
+            r4 = 1
+        else:
+            r4 = 0
     else:
         r4 = 2 if jarak_pandang_m < 200.0 else (1 if jarak_pandang_m < 500.0 else 0)
 

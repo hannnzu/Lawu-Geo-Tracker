@@ -37,11 +37,21 @@ def run():
 
     # 1. Definisikan file input/output
     csv_path = Config.DATA_CURATED_DIR / "dataset_integrated_lawu_2021_2025.csv"
+    temp_csv_path = csv_path.parent / "dataset_integrated_lawu_2021_2025_temp.csv"
+
+    # Self-healing: jika file utama terhapus tapi file temp ada dari proses sebelumnya, pulihkan
+    if not csv_path.exists() and temp_csv_path.exists():
+        logger.info("Mendeteksi file temp sisa dari proses sebelumnya. Memulihkan file asli...")
+        try:
+            temp_csv_path.rename(csv_path)
+            logger.info("File asli berhasil dipulihkan.")
+        except Exception as e:
+            logger.error(f"Gagal memulihkan file asli: {e}")
+            return
+
     if not csv_path.exists():
         logger.error(f"Dataset terintegrasi tidak ditemukan di {csv_path}!")
         return
-
-    temp_csv_path = csv_path.parent / "dataset_integrated_lawu_2021_2025_temp.csv"
 
     # 2. Proses CSV lokal
     logger.info(f"Memproses CSV lokal: {csv_path}...")
@@ -81,10 +91,24 @@ def run():
                     elapsed = time.time() - start_time
                     logger.info(f"  Sudah memproses {processed_count:,} baris... ({elapsed:.1f} detik)")
 
-        # Ganti file lama dengan yang baru
-        if csv_path.exists():
-            csv_path.unlink()
-        temp_csv_path.rename(csv_path)
+        # Berikan jeda sejenak agar OS Windows melepas lock file
+        time.sleep(1.0)
+
+        # Ganti file lama dengan yang baru (dengan retry untuk mengantisipasi race condition di Windows)
+        success = False
+        for attempt in range(5):
+            try:
+                if csv_path.exists():
+                    csv_path.unlink()
+                temp_csv_path.rename(csv_path)
+                success = True
+                break
+            except PermissionError:
+                logger.warning(f"File sedang dikunci oleh proses lain. Mencoba kembali dalam 1 detik... (Percobaan {attempt+1}/5)")
+                time.sleep(1.0)
+                
+        if not success:
+            raise PermissionError("Gagal mengganti file CSV karena dikunci secara permanen oleh proses lain.")
         
         duration = time.time() - start_time
         logger.info(f"Selesai memperbarui CSV lokal. Total: {processed_count:,} baris dalam {duration:.2f} detik.")
@@ -95,8 +119,12 @@ def run():
 
     except Exception as e:
         logger.error(f"Gagal memperbarui file CSV lokal: {e}", exc_info=True)
+        time.sleep(0.5)
         if temp_csv_path.exists():
-            temp_csv_path.unlink()
+            try:
+                temp_csv_path.unlink()
+            except PermissionError:
+                pass
         return
 
     # 3. Update database Aiven

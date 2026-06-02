@@ -409,12 +409,13 @@ def update_danger_level_in_db(engine) -> int:
                 WHEN curah_hujan_mm > 10 THEN 1 
                 ELSE 0 
             END,
-            -- Rule 4: Jarak Pandang (NULL dianggap kabut/danger level 1)
+            -- Rule 4: Jarak Pandang (Skenario C - Proxy WMO jika NULL)
             CASE 
-                WHEN jarak_pandang_m IS NULL THEN 1
-                WHEN jarak_pandang_m < 200 THEN 2 
-                WHEN jarak_pandang_m < 500 THEN 1 
-                ELSE 0 
+                WHEN jarak_pandang_m IS NOT NULL AND jarak_pandang_m < 200 THEN 2
+                WHEN jarak_pandang_m IS NOT NULL AND jarak_pandang_m < 500 THEN 1
+                WHEN jarak_pandang_m IS NULL AND kode_cuaca_wmo IN (45, 48) THEN 2
+                WHEN jarak_pandang_m IS NULL AND kode_cuaca_wmo IN (51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82) THEN 1
+                ELSE 0
             END,
             -- Rule 5: Kode Cuaca WMO
             CASE 
