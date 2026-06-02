@@ -83,7 +83,27 @@ def ensure_schema(engine) -> None:
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_titik_api_tanggal ON titik_api (tanggal);"))
         conn.commit()
 
-        # 4. Buat tabel cuaca_integrated
+        # 4. Buat tabel jalur_pendakian
+        logger.info("Membuat tabel 'jalur_pendakian' jika belum ada...")
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS jalur_pendakian (
+                id              SERIAL PRIMARY KEY,
+                nama_jalur      VARCHAR(100) NOT NULL,
+                urutan_titik    INTEGER NOT NULL,
+                lat             FLOAT NOT NULL,
+                lon             FLOAT NOT NULL,
+                elevasi_mdpl    INTEGER,
+                kemiringan_pct  FLOAT,
+                jarak_dari_basecamp_km FLOAT,
+                akumulasi_gain_m FLOAT,
+                sumber_file     VARCHAR(200),
+                terrain_type    VARCHAR(50)
+            );
+        """))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_jalur_nama ON jalur_pendakian (nama_jalur);"))
+        conn.commit()
+
+        # 5. Buat tabel cuaca_integrated
         logger.info("Membuat tabel 'cuaca_integrated' jika belum ada...")
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS cuaca_integrated (
@@ -107,12 +127,18 @@ def ensure_schema(engine) -> None:
                 kode_cuaca_wmo                SMALLINT,
                 jarak_titik_api_terdekat_km   FLOAT,
                 frp_terdekat_mw               FLOAT,
-                status_kebakaran_sekitar      SMALLINT
+                status_kebakaran_sekitar      SMALLINT,
+                danger_level                  SMALLINT DEFAULT 0
             );
         """))
         conn.commit()
 
-        # 5. Konfigurasi TimescaleDB Hypertable
+        # 6. Memastikan kolom 'danger_level' ada (untuk database yang sudah terisi sebelumnya)
+        logger.info("Memastikan kolom 'danger_level' ada di tabel 'cuaca_integrated'...")
+        conn.execute(text("ALTER TABLE cuaca_integrated ADD COLUMN IF NOT EXISTS danger_level SMALLINT DEFAULT 0;"))
+        conn.commit()
+
+        # 7. Konfigurasi TimescaleDB Hypertable
         logger.info("Memeriksa status hypertable untuk 'cuaca_integrated'...")
         res = conn.execute(text(
             "SELECT 1 FROM timescaledb_information.hypertables WHERE hypertable_name = 'cuaca_integrated'"
@@ -127,10 +153,11 @@ def ensure_schema(engine) -> None:
         else:
             logger.info("Tabel 'cuaca_integrated' sudah berupa hypertable.")
 
-        # 6. Buat indeks tambahan untuk cuaca_integrated
+        # 8. Buat indeks tambahan untuk cuaca_integrated
         logger.info("Membuat indeks tambahan untuk optimasi query...")
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cuaca_nama_pos_ts ON cuaca_integrated (nama_pos, timestamp DESC);"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cuaca_jalur_ts ON cuaca_integrated (jalur, timestamp DESC);"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_cuaca_danger_level ON cuaca_integrated (danger_level);"))
         conn.execute(text("""
             CREATE INDEX IF NOT EXISTS idx_cuaca_status_api 
             ON cuaca_integrated (status_kebakaran_sekitar) 
@@ -281,4 +308,106 @@ def load_cuaca_integrated(engine, csv_path: Path) -> int:
 
     duration = time.time() - start_time
     logger.info(f"Berhasil memuat {row_count:,} baris ke 'cuaca_integrated' dalam {duration:.2f} detik.")
+    return row_count
+
+
+def load_jalur_pendakian(engine, points: list[dict]) -> int:
+    """
+    Memuat data jalur pendakian ke database Aiven PostgreSQL.
+    Sebelum memuat, data lama akan dihapus (TRUNCATE) untuk menghindari duplikasi.
+    """
+    logger.info("Menghapus data lama di 'jalur_pendakian'...")
+    with engine.connect() as conn:
+        conn.execute(text("TRUNCATE TABLE jalur_pendakian RESTART IDENTITY CASCADE;"))
+        conn.commit()
+
+    if not points:
+        logger.warning("Tidak ada data titik jalur yang akan dimuat.")
+        return 0
+
+    logger.info(f"Memulai pemuatan {len(points)} titik jalur ke 'jalur_pendakian'...")
+    query = text("""
+        INSERT INTO jalur_pendakian (
+            nama_jalur, urutan_titik, lat, lon, elevasi_mdpl,
+            kemiringan_pct, jarak_dari_basecamp_km, akumulasi_gain_m,
+            sumber_file, terrain_type
+        ) VALUES (
+            :nama_jalur, :urutan_titik, :lat, :lon, :elevasi_mdpl,
+            :kemiringan_pct, :jarak_dari_basecamp_km, :akumulasi_gain_m,
+            :sumber_file, :terrain_type
+        );
+    """)
+    
+    start_time = time.time()
+    with engine.connect() as conn:
+        conn.execute(query, points)
+        conn.commit()
+        
+    duration = time.time() - start_time
+    logger.info(f"Berhasil memuat {len(points)} titik ke 'jalur_pendakian' dalam {duration:.2f} detik.")
+    return len(points)
+
+
+def update_danger_level_in_db(engine) -> int:
+    """
+    Memperbarui kolom danger_level di tabel cuaca_integrated berdasarkan rule-based logic
+    secara langsung di server database untuk efisiensi maksimal.
+    """
+    logger.info("Memperbarui kolom 'danger_level' di tabel 'cuaca_integrated' via SQL server-side...")
+    start_time = time.time()
+    
+    query = text("""
+        UPDATE cuaca_integrated
+        SET danger_level = GREATEST(
+            -- Rule 1: Suhu Terasa
+            CASE 
+                WHEN suhu_terasa_c < 0 THEN 2 
+                WHEN suhu_terasa_c < 5 THEN 1 
+                ELSE 0 
+            END,
+            -- Rule 2: Angin Kencang
+            CASE 
+                WHEN angin_kencang_kmh > 100 THEN 3 
+                WHEN angin_kencang_kmh > 80 THEN 2 
+                WHEN angin_kencang_kmh > 50 THEN 1 
+                ELSE 0 
+            END,
+            -- Rule 3: Curah Hujan
+            CASE 
+                WHEN curah_hujan_mm > 20 THEN 2 
+                WHEN curah_hujan_mm > 10 THEN 1 
+                ELSE 0 
+            END,
+            -- Rule 4: Jarak Pandang (NULL dianggap kabut/danger level 1)
+            CASE 
+                WHEN jarak_pandang_m IS NULL THEN 1
+                WHEN jarak_pandang_m < 200 THEN 2 
+                WHEN jarak_pandang_m < 500 THEN 1 
+                ELSE 0 
+            END,
+            -- Rule 5: Kode Cuaca WMO
+            CASE 
+                WHEN kode_cuaca_wmo IN (95, 96, 99) THEN 3 
+                ELSE 0 
+            END,
+            -- Rule 6: Status Kebakaran Sekitar
+            CASE 
+                WHEN status_kebakaran_sekitar = 1 THEN 3 
+                ELSE 0 
+            END,
+            -- Rule 7: Jarak Titik Api Terdekat
+            CASE 
+                WHEN jarak_titik_api_terdekat_km < 1.0 THEN 3 
+                ELSE 0 
+            END
+        );
+    """)
+    
+    with engine.connect() as conn:
+        res = conn.execute(query)
+        conn.commit()
+        row_count = res.rowcount
+        
+    duration = time.time() - start_time
+    logger.info(f"Berhasil memperbarui {row_count:,} baris 'danger_level' di database dalam {duration:.2f} detik.")
     return row_count
