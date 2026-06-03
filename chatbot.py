@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import joblib
 import google.generativeai as genai
 from datetime import datetime
@@ -69,11 +70,21 @@ def tarik_data_dan_prediksi():
         'Jarak_Titik_Api_Terdekat_KM', 'FRP_Terdekat_MW', 'Status_Kebakaran_Sekitar'
     ])
     
+    # Tambahkan fitur waktu siklis saat ini
+    now = datetime.now()
+    hour = now.hour
+    month = now.month
+    
+    df_input['hour_sin'] = np.sin(2 * np.pi * hour / 24.0)
+    df_input['hour_cos'] = np.cos(2 * np.pi * hour / 24.0)
+    df_input['month_sin'] = np.sin(2 * np.pi * month / 12.0)
+    df_input['month_cos'] = np.cos(2 * np.pi * month / 12.0)
+    
     prediksi = ml_model.predict(df_input)
     status_label = {0: "AMAN", 1: "WASPADA", 2: "BAHAYA", 3: "DILARANG"}
     
     # Kita hanya kirimkan ANGKA STATISTIK, biarkan AI yang menjabarkan dengan natural
-    laporan = f"Waktu Sistem: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n"
+    laporan = f"Waktu Sistem: {now.strftime('%Y-%m-%d %H:%M')}\n"
     laporan += f"- Cemoro Sewu  -> Suhu: 16C, Hujan: 0mm/jam, Angin: 10km/h. ML: {status_label[prediksi[0]]}\n"
     laporan += f"- Cemoro Kandang -> Suhu: 12C, Hujan: 15mm/jam, Angin: 55km/h. ML: {status_label[prediksi[1]]}\n"
     laporan += f"- Candi Cetho  -> Suhu: 18C, Hujan: 0mm/jam, Angin: 5km/h. ML: {status_label[prediksi[2]]}\n"
