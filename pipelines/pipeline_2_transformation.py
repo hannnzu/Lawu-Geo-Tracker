@@ -20,7 +20,18 @@ from src.transformation.gpx_processor import process_gpx_points
 
 logger = get_logger("pipeline_2_transformation", log_dir=Config.LOGS_DIR)
 
-def transform_integration_and_danger_level():
+def transform_integration_and_danger_level() -> None:
+    """
+    Menjalankan integrasi data spatiotemporal cuaca-bencana dan kalkulasi Danger Level lokal.
+    
+    Membaca file CSV cuaca per jam dan CSV data titik api dari folder raw/processed.
+    Melakukan join spasial (jarak Haversine < 3 km) antara posisi cuaca dan titik api pada tanggal yang sama.
+    Menghitung level bahaya (Danger Level) skala 0-3 berdasarkan kondisi cuaca dan kedekatan dengan titik api.
+    Menyimpan file dataset terintegrasi hasil kalkulasi ke direktori curated.
+    
+    Returns:
+        None
+    """
     logger.info("--- [1/2] TRANSFORM: INTEGRASI & DANGER LEVEL ---")
     
     # Setup Paths
@@ -75,7 +86,18 @@ def transform_integration_and_danger_level():
     for k, v in class_distribution.items():
         logger.info(f"  Level {k}: {v:>8,} baris")
 
-def transform_gpx():
+def transform_gpx() -> None:
+    """
+    Menjalankan pemrosesan dan ekstraksi metrik spasial dari file GPX jalur pendakian.
+    
+    Membaca file GPX mentah untuk tiga jalur pendakian Gunung Lawu yang terdaftar.
+    Parsing titik koordinat (latitude, longitude, elevasi) dan mengurutkannya secara runut.
+    Menghitung metrik kemiringan (gradient), jarak kumulatif dari basecamp, akumulasi elevation gain, dan tipe medan.
+    Menyimpan seluruh titik lintasan beserta metrik hasil kalkulasi ke satu file CSV lokal.
+    
+    Returns:
+        None
+    """
     logger.info("\n--- [2/2] TRANSFORM: PEMROSESAN GPX ---")
     gpx_dir = Config.DATA_RAW_DIR / "gpx"
     processed_dir = Config.DATA_PROC_DIR / "geospatial"
@@ -103,7 +125,18 @@ def transform_gpx():
             writer.writerows(all_points)
         logger.info(f"Berhasil menyimpan {len(all_points)} titik jalur pendakian ke {local_csv_path.name}")
 
-def run():
+def run() -> None:
+    """
+    Menjalankan seluruh rangkaian Pipeline Transformation (Transform) secara berurutan.
+    
+    Mencatat log dimulainya proses transformasi data.
+    Memanggil fungsi integrasi cuaca-bencana serta kalkulasi Danger Level.
+    Memproses ekstraksi parameter spasial rute dari file GPX pendakian.
+    Mencatat log penyelesaian seluruh proses transformasi.
+    
+    Returns:
+        None
+    """
     logger.info("=" * 60)
     logger.info("PIPELINE 2: TRANSFORMATION (TRANSFORM) DIMULAI")
     logger.info("=" * 60)

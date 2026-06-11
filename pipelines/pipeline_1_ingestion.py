@@ -16,7 +16,18 @@ from src.ingestion.osm_extractor import fetch_trails_osm, osm_to_geojson, save_g
 
 logger = get_logger("pipeline_1_ingestion", log_dir=Config.LOGS_DIR)
 
-def ingest_disaster():
+def ingest_disaster() -> None:
+    """
+    Menjalankan ekstraksi data titik api dari NASA FIRMS API.
+    
+    Membaca API key dan range tanggal pencarian dari konfigurasi sistem.
+    Memeriksa tanggal data terakhir yang tersimpan di lokal untuk mendukung fitur resume.
+    Melakukan request API NASA FIRMS secara batch untuk periode tanggal yang tersisa.
+    Menyimpan data titik api yang diperoleh secara append ke file CSV lokal.
+    
+    Returns:
+        None
+    """
     logger.info("--- [1/3] EXTRACT: NASA FIRMS (TITIK API) ---")
     MAP_KEY = Config.FIRMS_MAP_KEY
     if not MAP_KEY or len(MAP_KEY) != 32:
@@ -35,7 +46,18 @@ def ingest_disaster():
     else:
         logger.info("Tidak ada data titik api baru untuk disimpan.")
 
-def ingest_weather():
+def ingest_weather() -> None:
+    """
+    Menjalankan ekstraksi data cuaca per jam dari Open-Meteo Archive API.
+    
+    Membaca konfigurasi tanggal dan memeriksa pos pendakian yang sudah ada di lokal (fitur resume).
+    Melakukan request API Open-Meteo hanya untuk lokasi pos pendakian yang tersisa.
+    Menerapkan jeda waktu 3.0 detik antar lokasi stasiun cuaca untuk menghindari batas limit API.
+    Menyimpan data hasil unduhan baru secara append (mode='a') ke file CSV lokal.
+    
+    Returns:
+        None
+    """
     logger.info("\n--- [2/3] EXTRACT: OPEN-METEO (CUACA HOURLY) ---")
     START_DATE, END_DATE = Config.WEATHER_HISTORICAL_START, Config.WEATHER_HISTORICAL_END
     OUTPUT_CSV = Config.DATA_PROC_DIR / "weather" / f"cuaca_hourly_lawu_{START_DATE[:4]}_{END_DATE[:4]}.csv"
@@ -52,7 +74,17 @@ def ingest_weather():
     if failed:
         logger.warning(f"Lokasi gagal diambil: {failed}")
 
-def ingest_osm():
+def ingest_osm() -> None:
+    """
+    Menjalankan ekstraksi data rute jalur pendakian dari OpenStreetMap (OSM).
+    
+    Mengirimkan query Overpass API untuk mengambil jalan setapak (highway=path) di wilayah Gunung Lawu.
+    Mengonversi data struktur nodes dan ways dari OSM menjadi format standar GeoJSON.
+    Menyimpan file GeoJSON hasil ekstraksi secara lokal untuk pemetaan spasial.
+    
+    Returns:
+        None
+    """
     logger.info("\n--- [3/3] EXTRACT: OPENSTREETMAP (JALUR OSM) ---")
     OUTPUT_GEOJSON = Config.DATA_PROC_DIR / "geospatial" / "jalur_lawu_osm.geojson"
     osm_data = fetch_trails_osm()
@@ -60,7 +92,17 @@ def ingest_osm():
     save_geojson(geojson, OUTPUT_GEOJSON)
     logger.info(f"Berhasil menyimpan {len(geojson['features'])} feature GeoJSON ke {OUTPUT_GEOJSON.name}")
 
-def run():
+def run() -> None:
+    """
+    Menjalankan seluruh rangkaian Pipeline Ingestion (Extract) secara berurutan.
+    
+    Mencatat log penanda dimulainya pipeline ekstraksi data.
+    Memanggil fungsi ekstraksi titik api (NASA FIRMS), cuaca per jam (Open-Meteo), dan jalur (OSM).
+    Mencatat log akhir penanda bahwa seluruh proses ekstraksi telah selesai.
+    
+    Returns:
+        None
+    """
     logger.info("=" * 60)
     logger.info("PIPELINE 1: INGESTION (EXTRACT) DIMULAI")
     logger.info("=" * 60)

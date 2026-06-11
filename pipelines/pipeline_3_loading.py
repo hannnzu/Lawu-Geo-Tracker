@@ -22,7 +22,20 @@ from src.loading.aiven_loader import (
 
 logger = get_logger("pipeline_3_loading", log_dir=Config.LOGS_DIR)
 
-def run_verification(engine):
+def run_verification(engine) -> None:
+    """
+    Menjalankan verifikasi asersi kualitas data langsung pada database Aiven PostgreSQL.
+    
+    Melakukan perhitungan total baris (volume data) untuk memverifikasi kelengkapan data.
+    Memeriksa anomali integritas data dengan memvalidasi bahwa setiap baris cuaca berstatus kebakaran aktif memiliki danger_level = 3.
+    Mencatat hasil status verifikasi ke dalam log (LULUS atau GAGAL) berdasarkan temuan anomali.
+    
+    Args:
+        engine (Engine): Objek engine SQLAlchemy untuk koneksi ke database.
+        
+    Returns:
+        None
+    """
     logger.info("\n--- [6/6] VERIFIKASI DATA DATABASE ---")
     with engine.connect() as conn:
         cnt_pos = conn.execute(text("SELECT COUNT(*) FROM pos_pendakian")).scalar()
@@ -44,7 +57,19 @@ def run_verification(engine):
         else:
             logger.warning(f"Integritas Danger Level: GAGAL ({anomali} anomali ditemukan)")
 
-def run():
+def run() -> None:
+    """
+    Menjalankan seluruh rangkaian Pipeline Loading (Load) secara berurutan.
+    
+    Membuka koneksi ke database Aiven PostgreSQL menggunakan kredensial konfigurasi.
+    Membuat skema tabel (DDL) serta relasi database jika belum ada.
+    Memuat data tabel dimensi (pos pendakian, titik api historis, dan jalur pendakian GPX).
+    Mengunggah tabel fakta (cuaca integrated) dan memicu pembaruan danger level di sisi server.
+    Memanggil fungsi verifikasi kualitas data untuk menjamin integritas data yang masuk ke database.
+    
+    Returns:
+        None
+    """
     logger.info("=" * 60)
     logger.info("PIPELINE 3: LOADING KE AIVEN (LOAD) DIMULAI")
     logger.info("=" * 60)

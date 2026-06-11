@@ -6,24 +6,18 @@ Sumber: https://archive-api.open-meteo.com
 - Gratis, tanpa API Key.
 - Data per jam: suhu, kelembaban, hujan, angin, awan, jarak pandang, dll.
 - Multi-lokasi: 3 basecamp, seluruh pos di 3 jalur, dan puncak Gunung Lawu.
-- Rentang waktu: 5 tahun (2021-2025) -> ~831.600 baris total.
-
-Diadaptasi dari: madiun_cuaca_tahunan.py
+- Rentang waktu: 5 tahun (2021-2025)
 """
 
 import csv
 import time
 from pathlib import Path
-
 import requests
 
 
 BASE_URL = "https://archive-api.open-meteo.com/v1/archive"
 
 # Variabel per jam yang diambil dari Open-Meteo
-# Dipilih berdasarkan relevansi untuk 4 task ML:
-# (1) Prediksi kondisi cuaca, (2) Risiko/bahaya,
-# (3) Rekomendasi jalur, (4) Estimasi waktu tempuh
 HOURLY_VARIABLES = [
     "temperature_2m",          # Suhu udara aktual (°C)
     "apparent_temperature",    # Suhu terasa / windchill (°C)

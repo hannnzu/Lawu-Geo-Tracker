@@ -35,7 +35,7 @@ def hitung_danger_level(
     # Hujan deras (> 20mm/jam) bahaya banjir/longsor, (> 10mm/jam) waspada.
     r3 = 2 if curah_hujan_mm > 20.0 else (1 if curah_hujan_mm > 10.0 else 0)
 
-    # 4. Aturan Jarak Pandang (Skenario C - Proxy WMO jika NULL)
+    # 4. Aturan Jarak Pandang
     # Jika bernilai NULL/None, diestimasi dari kode WMO:
     # WMO 45, 48 = Kabut (Level 2)
     # WMO 51-67, 80-82 = Hujan/Gerimis/Showers (Level 1)
