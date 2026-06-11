@@ -1,99 +1,88 @@
+"""
+train_model.py
+--------------------------------
+Script untuk melatih ulang model Machine Learning (Random Forest)
+untuk memprediksi Danger Level di jalur pendakian Gunung Lawu.
+
+Data Splitting: 80% Training, 20% Testing (Randomized)
+"""
+
 import pandas as pd
-import numpy as np
-import os
-import time
-import joblib 
+from pathlib import Path
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
+import joblib
 
-def main():
-    print("Memuat dataset historis... (mohon tunggu sebentar)")
-    file_path = os.path.join('DATA', 'curated', 'dataset_integrated_lawu_2021_2025.csv')
-    
-    try:
-        df = pd.read_csv(file_path, low_memory=False)
-    except FileNotFoundError:
-        print(f"Error: File {file_path} tidak ditemukan.")
+def run_training():
+    print("=" * 60)
+    print("MEMULAI TRAINING MODEL ML (80% Train, 20% Test)")
+    print("=" * 60)
+
+    # Sesuaikan dengan path dataset hasil pipeline 2 (Transformation)
+    # Ubah nama tahun sesuai yang kamu pakai, misal 2021_2025
+    data_path = Path("../DATA/curated/dataset_integrated_lawu_2021_2025.csv")
+    model_output_path = Path("../models/rf_danger_level_model.joblib")
+
+    if not data_path.exists():
+        print(f"[!] Dataset tidak ditemukan di {data_path}")
+        print("    Pastikan Pipeline 2 sudah dijalankan!")
         return
 
-    print("=== DATA PREPROCESSING & FEATURE ENGINEERING ===")
-    
-    # 1. Konversi Timestamp dan Ekstraksi Fitur Waktu Siklis (Cyclical Time Features)
-    print("Mengekstrak fitur temporal siklis (sin/cos)...")
-    df['Timestamp'] = pd.to_datetime(df['Timestamp'])
-    df['hour'] = df['Timestamp'].dt.hour
-    df['month'] = df['Timestamp'].dt.month
-    
-    df['hour_sin'] = np.sin(2 * np.pi * df['hour'] / 24.0)
-    df['hour_cos'] = np.cos(2 * np.pi * df['hour'] / 24.0)
-    df['month_sin'] = np.sin(2 * np.pi * df['month'] / 12.0)
-    df['month_cos'] = np.cos(2 * np.pi * df['month'] / 12.0)
-    
-    # 2. Pemisahan Data Secara Temporal (Time-Series Splitting)
-    # Train: 2021-2024, Test: 2025
-    print("Membagi data secara temporal: Train (2021-2024), Test (2025)...")
-    train_df = df[df['Timestamp'].dt.year <= 2024]
-    test_df = df[df['Timestamp'].dt.year == 2025]
-    
-    print(f"  Jumlah baris training : {train_df.shape[0]:,}")
-    print(f"  Jumlah baris testing  : {test_df.shape[0]:,}")
+    # 1. Memuat Dataset
+    print("[1/5] Memuat dataset terintegrasi...")
+    df = pd.read_csv(data_path)
+    print(f"      Total data awal: {len(df):,} baris.")
 
-    # Kolom yang akan dibuang untuk pemodelan (non-fitur atau 100% null)
-    cols_to_drop = ['Timestamp', 'Nama Pos', 'Jalur', 'Jarak Pandang (m)', 'Danger_Level', 'hour', 'month']
-    
-    X_train = train_df.drop(columns=cols_to_drop)
-    y_train = train_df['Danger_Level']
-    
-    X_test = test_df.drop(columns=cols_to_drop)
-    y_test = test_df['Danger_Level']
+    # Pastikan kolom target ada
+    target_col = 'Danger_Level'
+    if target_col not in df.columns:
+        print(f"[!] Kolom '{target_col}' tidak ditemukan! Pastikan ejaan huruf besar/kecilnya benar.")
+        return
 
-    print("\nFitur yang digunakan untuk training:")
-    for col in X_train.columns:
-        print(f" - {col}")
-
-    print("\n=== LANGKAH 3: MELATIH MODEL (TRAINING) ===")
-    print("Algoritma: Random Forest Classifier dengan Max Depth Regularization")
-    print("Mulai melatih mesin...")
-    print("[WAIT] Mohon tunggu sekitar 1-3 menit. Proses ini membutuhkan kinerja CPU yang tinggi...\n")
+    # 2. Pre-processing (Hapus kolom yang tidak relevan untuk fitur ML)
+    # Sesuaikan list 'cols_to_drop' ini dengan kolom di CSV kamu yang BUKAN angka/fitur metrik
+    cols_to_drop = ['timestamp', 'nama_pos', 'waktu', 'tanggal', 'lokasi', 'status_kebakaran_sekitar']
+    X = df.drop(columns=[target_col] + [c for c in cols_to_drop if c in df.columns])
     
-    start_time = time.time()
+    # Isi nilai kosong (NaN) dengan angka 0 atau rata-rata jika ada
+    X = X.fillna(0) 
+    y = df[target_col]
 
-    # Inisialisasi Model AI dengan batasan kedalaman pohon (mencegah overfit)
-    model = RandomForestClassifier(
-        n_estimators=50,
-        max_depth=15,             # Membatasi overfit agar model lebih generalis
-        random_state=42, 
-        n_jobs=-1,                # Menggunakan seluruh core CPU
-        class_weight='balanced'   # Penyeimbang data akibat class imbalance
+    # 3. Data Splitting (80% Train, 20% Test) secara Random
+    print("\n[2/5] Membagi data secara acak (80% Training, 20% Testing)...")
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, 
+        test_size=0.20, 
+        random_state=42 # Agar hasil random konsisten
     )
 
-    # Memulai proses belajar (FIT)
+    print(f"      -> Data Training : {len(X_train):,} baris (80%)")
+    print(f"      -> Data Testing  : {len(X_test):,} baris (20%)")
+
+    # 4. Model Training
+    print("\n[3/5] Memulai proses training model Random Forest Classifier...")
+    # n_jobs=-1 agar menggunakan semua core CPU komputer/laptop
+    model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
     model.fit(X_train, y_train)
 
-    waktu_training = time.time() - start_time
-    print(f"[OK] Training Selesai! Waktu eksekusi: {waktu_training:.2f} detik.\n")
-
-    print("=== LANGKAH 4: EVALUASI MODEL ===")
-    print("Menguji model pada data Test Year 2025...")
-    
-    # Meminta model menebak jawaban (Prediksi)
+    # 5. Model Evaluation
+    print("\n[4/5] Mengevaluasi akurasi model pada data testing...")
     y_pred = model.predict(X_test)
-
-    # Menilai hasil
-    acc = accuracy_score(y_test, y_pred)
-    print(f"\n[ACC] Akurasi Keseluruhan Model: {acc * 100:.2f}%\n")
-
-    print("[REPORT] Laporan Detail (Classification Report):")
+    
+    print("-" * 40)
+    print("HASIL EVALUASI MODEL:")
+    print("Akurasi Keseluruhan : {:.2f}%".format(accuracy_score(y_test, y_pred) * 100))
+    print("\nDetail Laporan Klasifikasi:")
     print(classification_report(y_test, y_pred))
+    print("-" * 40)
 
-    print("=== LANGKAH 5: MENYIMPAN MODEL (EXPORT) ===")
-    os.makedirs('models', exist_ok=True)
-    
-    model_path = os.path.join('models', 'rf_danger_level_model.joblib')
-    joblib.dump(model, model_path)
-    
-    print(f"[OK] Model AI berhasil disimpan di: {model_path}")
-    print("Model ini sekarang siap dihubungkan ke chatbot streamlit!")
+    # 6. Menyimpan Model
+    print("\n[5/5] Menyimpan model...")
+    model_output_path.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(model, model_output_path)
+    print(f"      Model berhasil disimpan di: {model_output_path}")
+    print("=" * 60)
 
 if __name__ == "__main__":
-    main()
+    run_training()
