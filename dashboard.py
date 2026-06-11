@@ -126,7 +126,7 @@ def get_firms_alerts():
 @st.cache_data
 def load_geojson():
     try:
-        with open("data/raw/geospatial/jalur_lawu_lengkap.geojson", "r") as f:
+        with open("DATA/raw/geospatial/jalur_lawu_lengkap.geojson", "r") as f:
             return json.load(f)
     except:
         return None
