@@ -50,7 +50,20 @@ def fetch_trails_osm(bbox: tuple = LAWU_BBOX,
     """
     query = build_overpass_query(bbox, name_filter)
     print("Mengambil data jalur dari OpenStreetMap (Overpass API)...")
-    response = requests.post(OVERPASS_URL, data={"data": query}, timeout=60)
+    
+    # 1. Tambahkan identitas User-Agent agar tidak dianggap bot spam oleh server
+    headers = {
+        "User-Agent": "LawuGeoTracker/1.0 (Data Engineering Project)"
+    }
+    
+    # 2. Sisipkan parameter headers ke dalam requests.post
+    response = requests.post(
+        OVERPASS_URL, 
+        data={"data": query}, 
+        headers=headers, 
+        timeout=60
+    )
+    
     response.raise_for_status()
     data = response.json()
     print(f"Berhasil! Ditemukan {len(data['elements'])} segmen jalur.")

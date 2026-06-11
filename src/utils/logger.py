@@ -48,7 +48,7 @@ def get_logger(name: str, log_dir: str | Path = "logs") -> logging.Logger:
         )
         file_handler.setFormatter(file_format)
 
-        logger.addHandler(console_handler)
+        # logger.addHandler(console_handler)
         logger.addHandler(file_handler)
 
     return logger

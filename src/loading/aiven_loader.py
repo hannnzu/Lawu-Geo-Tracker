@@ -284,8 +284,7 @@ def load_cuaca_integrated(engine, csv_path: Path) -> int:
     raw_conn = engine.raw_connection()
     try:
         with raw_conn.cursor() as cur:
-            # Karena skema kolom di DB sama persis urutannya dengan header CSV, 
-            # kita tidak wajib mendefinisikan kolom, tapi baik dilakukan agar aman.
+            # PERBAIKAN: Kolom danger_level ditambahkan di urutan paling akhir
             copy_sql = """
                 COPY cuaca_integrated (
                     timestamp, nama_pos, jalur, elevasi_mdpl, lat, lon,
@@ -293,7 +292,7 @@ def load_cuaca_integrated(engine, csv_path: Path) -> int:
                     hujan_mm, kecepatan_angin_kmh, arah_angin_derajat,
                     angin_kencang_kmh, tutupan_awan_pct, jarak_pandang_m,
                     tekanan_udara_hpa, kode_cuaca_wmo, jarak_titik_api_terdekat_km,
-                    frp_terdekat_mw, status_kebakaran_sekitar
+                    frp_terdekat_mw, status_kebakaran_sekitar, danger_level
                 ) FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '');
             """
             with open(csv_path, mode="r", encoding="utf-8") as f:
