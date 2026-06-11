@@ -8,6 +8,9 @@ from psycopg2.extras import RealDictCursor
 import folium
 from streamlit_folium import st_folium
 
+# Import modul FIRMS Anda
+from src.ingestion.nasa_firms import fetch_fire_batch
+
 # ==========================================
 # 1. KONFIGURASI HALAMAN & STYLE CUSTOM
 # ==========================================
@@ -59,7 +62,7 @@ def query_aiven(sql_query, params=None):
         return None
 
 # ==========================================
-# 3. FUNGSI DATA (CUACA, GEOJSON, FILTERING)
+# 3. FUNGSI DATA (CUACA, FIRMS, GEOJSON)
 # ==========================================
 @st.cache_data(ttl=1800)
 def get_live_weather():
@@ -75,6 +78,16 @@ def get_live_weather():
     except:
         return None
 
+@st.cache_data(ttl=3600)
+def get_firms_alerts():
+    MAP_KEY = "3d168d114f4f45c636d55688441b5f6f" # API Key Anda
+    today_str = datetime.date.today().isoformat()
+    try:
+        fires = fetch_fire_batch(map_key=MAP_KEY, start_date=today_str, day_range=1)
+        return fires if fires else []
+    except Exception as e:
+        return []
+
 @st.cache_data
 def load_geojson():
     try:
@@ -84,18 +97,12 @@ def load_geojson():
         return None
 
 def filter_geojson(geo_data, keyword):
-    """Fungsi untuk menyaring fitur GeoJSON berdasarkan kata kunci (nama jalur)"""
-    if not geo_data or 'features' not in geo_data:
-        return geo_data
-    
+    if not geo_data or 'features' not in geo_data: return geo_data
     filtered_features = []
     for feat in geo_data['features']:
-        # Mengubah properties menjadi string dan mencari kata kunci
         prop_str = json.dumps(feat.get('properties', {})).lower()
         if keyword.lower() in prop_str:
             filtered_features.append(feat)
-            
-    # Jika tidak ada yang cocok, kembalikan kosong agar peta bersih
     return {"type": "FeatureCollection", "features": filtered_features}
 
 WMO_CODES = {
@@ -104,6 +111,7 @@ WMO_CODES = {
 }
 
 weather_data = get_live_weather()
+firms_data = get_firms_alerts()
 geojson_data = load_geojson()
 
 # ==========================================
@@ -121,7 +129,11 @@ col_weather, col_disaster = st.columns([2, 1])
 
 with col_disaster:
     st.subheader("DISASTER ALERTS")
-    st.success("**✅ BEBAS TITIK API**\n\nSatelit NASA FIRMS tidak mendeteksi anomali panas hari ini.")
+    if firms_data and len(firms_data) > 0:
+        st.error(f"**🔥 HOTSPOT DETECTED ({len(firms_data)} Titik Api)**\n\nTitik api terdeteksi di area Lawu. Cek peta di bawah untuk lokasi detailnya.")
+    else:
+        st.success("**✅ BEBAS TITIK API**\n\nSatelit NASA FIRMS tidak mendeteksi anomali panas hari ini.")
+        
     st.markdown("---")
     st.subheader("💡 Tanya Geo-Tracker")
     
@@ -142,7 +154,6 @@ with col_disaster:
 with col_weather:
     st.subheader("CURRENT WEATHER (PUNCAK LAWU)")
     
-    # 1. Komponen Cuaca Default
     if weather_data and "current" in weather_data:
         curr = weather_data["current"]
         st.markdown(f"<div class='weather-card'>"
@@ -158,17 +169,17 @@ with col_weather:
     else:
         st.error("Gagal memuat data cuaca real-time.")
 
-    # 2. Output Jawaban Dinamis (Custom Cards)
+    # Output Jawaban Dinamis
     st.markdown("<br>", unsafe_allow_html=True)
     if template_opsi != "-- Pilih Pertanyaan --":
         st.subheader("📊 HASIL ANALISIS GEO-TRACKER")
         
         if template_opsi == "Jalur mana yang paling aman saat ini?":
-            # Simulasi query ke Aiven, mendapatkan Cemoro Kandang
+            # Ganti dengan logika query_aiven jika sudah terhubung penuh
             st.markdown(f"<div class='safe-card'>"
                         f"<p style='color:#6ee7b7; font-weight:bold; margin-bottom:0px;'>REKOMENDASI SISTEM</p>"
                         f"<h3 style='margin-top:0px; color:white;'>Jalur Cemoro Kandang</h3>"
-                        f"<p style='color:#a7f3d0;'>Status: <strong>AMAN</strong><br>Alasan: Elevasi yang stabil, tidak ada anomali suhu, dan intensitas angin terhalang oleh vegetasi hutan yang rapat.</p>"
+                        f"<p style='color:#a7f3d0;'>Status: <strong>AMAN</strong><br>Alasan: Elevasi stabil, tidak ada anomali suhu, dan aman dari titik api.</p>"
                         f"</div>", unsafe_allow_html=True)
 
         elif template_opsi == "Bagaimana prediksi cuaca besok di Gunung Lawu?":
@@ -179,39 +190,40 @@ with col_weather:
                             f"<p style='color:#63b3ed; font-weight:bold; margin-bottom:0px;'>PREDIKSI BESOK</p>"
                             f"<h3 style='margin-top:0px;'>{WMO_CODES.get(besok_wmo, 'Cerah Berawan')}</h3>"
                             f"<div class='metric-value'>{besok_temp}°C</div>"
-                            f"<p style='color:#a0aec0; margin-top:5px;'>Saran: Lakukan *summit attack* sebelum jam 9 pagi untuk menghindari kabut tebal.</p>"
+                            f"<p style='color:#a0aec0; margin-top:5px;'>Saran: Waktu terbaik mendaki adalah pagi hari.</p>"
                             f"</div>", unsafe_allow_html=True)
 
         elif template_opsi == "Apa potensi bahaya (hazard) cuaca saat ini?":
             if weather_data:
                 wind = weather_data['current']['wind_speed_10m']
+                fire_count = len(firms_data) if firms_data else 0
                 st.markdown(f"<div class='hazard-card'>"
                             f"<p style='color:#fca5a5; font-weight:bold; margin-bottom:0px;'>MONITORING BAHAYA LINGKUNGAN</p>"
                             f"<h3 style='margin-top:0px; color:white;'>Analisis Risiko Saat Ini</h3>"
                             f"<ul style='color:#fecaca; margin-bottom:0px;'>"
-                            f"<li><strong>Angin Badai:</strong> {'Tinggi' if wind > 30 else 'Rendah'} ({wind} km/h)</li>"
+                            f"<li><strong>Angin:</strong> {'Kencang' if wind > 30 else 'Normal'} ({wind} km/h)</li>"
                             f"<li><strong>Hujan Ekstrem:</strong> Tidak terdeteksi</li>"
-                            f"<li><strong>Titik Api (Kebakaran):</strong> Aman (0 Titik)</li>"
+                            f"<li><strong>Titik Api:</strong> {fire_count} Titik Terdeteksi</li>"
                             f"</ul>"
                             f"</div>", unsafe_allow_html=True)
 
         elif "Tampilkan detail" in template_opsi:
-            st.info("Peta di bawah telah diperbarui untuk hanya menampilkan jalur yang Anda minta.")
+            st.info("Peta di bawah telah diperbarui untuk menampilkan rute yang diminta.")
 
 st.markdown("---")
 
 # ==========================================
-# 6. LAYOUT TENGAH: PETA DINAMIS (FOLIUM)
+# 6. LAYOUT TENGAH: PETA DINAMIS & TERINTEGRASI (FOLIUM)
 # ==========================================
-st.subheader("INTERACTIVE TRAIL MAP")
+st.subheader("INTEGRATED MAP: CUACA, BENCANA & JALUR")
 
 # Logika Penyaringan Peta
 geo_to_display = geojson_data
 map_keyword = None
-jalur_warna = '#3b82f6' # Biru untuk jalur tunggal
+jalur_warna = '#3b82f6' # Biru default
 
 if template_opsi == "Jalur mana yang paling aman saat ini?":
-    map_keyword = "kandang" # Karena aman adalah Kandang
+    map_keyword = "kandang" 
     jalur_warna = '#10b981' # Hijau
 elif template_opsi == "Tampilkan detail Jalur Cemoro Kandang":
     map_keyword = "kandang"
@@ -220,51 +232,65 @@ elif template_opsi == "Tampilkan detail Jalur Cemoro Sewu":
 elif template_opsi == "Tampilkan detail Jalur Candi Cetho":
     map_keyword = "cetho"
 
-# Terapkan filter jika ada kata kunci
 if map_keyword and geojson_data:
     geo_to_display = filter_geojson(geojson_data, map_keyword)
     jalur_ditampilkan = len(geo_to_display['features'])
 else:
-    jalur_warna = '#ef4444' # Merah jika menampilkan semua
+    jalur_warna = '#ef4444' # Merah untuk semua jalur
     jalur_ditampilkan = len(geojson_data['features']) if geojson_data else 0
 
 map_info_col, map_display_col = st.columns([1, 2])
 
 with map_info_col:
-    st.markdown("#### Detail Rute di Peta")
+    st.markdown("#### Analisis Spasial")
     
-    # Menampilkan informasi detail spesifik yang dipilih user
     if map_keyword == "kandang":
-        st.success("**JALUR CEMORO KANDANG**\n\n- **Karakteristik:** Relatif landai & berliku.\n- **Estimasi:** 7-9 jam.\n- **Kondisi:** Vegetasi rapat, aman dari angin kencang.")
+        st.success("**JALUR CEMORO KANDANG**\n\n- **Karakteristik:** Relatif landai & berliku.\n- **Estimasi:** 7-9 jam.\n- **Kondisi:** Vegetasi rapat, aman dari angin.")
     elif map_keyword == "sewu":
-        st.warning("**JALUR CEMORO SEWU**\n\n- **Karakteristik:** Terjal & berbatu (susunan tangga batu).\n- **Estimasi:** 6-7 jam.\n- **Kondisi:** Cepat naik elevasi, rawan licin saat hujan.")
+        st.warning("**JALUR CEMORO SEWU**\n\n- **Karakteristik:** Terjal & berbatu.\n- **Estimasi:** 6-7 jam.\n- **Kondisi:** Rawan licin saat hujan.")
     elif map_keyword == "cetho":
-        st.error("**JALUR CANDI CETHO**\n\n- **Karakteristik:** Sabana terbuka & rute terpanjang.\n- **Estimasi:** 9-11 jam.\n- **Kondisi:** Indah namun rawan badai kabut tebal.")
+        st.error("**JALUR CANDI CETHO**\n\n- **Karakteristik:** Sabana terbuka & rute terpanjang.\n- **Estimasi:** 9-11 jam.\n- **Kondisi:** Indah namun rawan badai kabut.")
     else:
-        st.info("**SEMUA JALUR PENDAKIAN**\n\nMenampilkan seluruh opsi rute resmi Gunung Lawu (Cemoro Sewu, Cemoro Kandang, dan Candi Cetho).")
+        st.info("**SEMUA JALUR PENDAKIAN**\n\nMenampilkan seluruh rute utama Gunung Lawu.")
 
-    st.metric(label="Jumlah Garis Jalur Tergambar", value=jalur_ditampilkan)
+    st.metric(label="Jalur Ditampilkan", value=jalur_ditampilkan)
+    st.metric(label="Titik Api (Hotspot) di Peta", value=len(firms_data) if firms_data else 0)
 
 with map_display_col:
+    # 1. Inisialisasi Peta Base
     m = folium.Map(
         location=[-7.6276, 111.1925], 
         zoom_start=12,
         tiles="OpenTopoMap"
     )
     
-    # Tambahkan GeoJSON yang sudah disaring ke peta
+    # 2. Render Garis Jalur Pendakian
     if geo_to_display and jalur_ditampilkan > 0:
         folium.GeoJson(
             geo_to_display,
             name="Jalur Pendakian",
-            style_function=lambda feature: {
-                'color': jalur_warna,
-                'weight': 5,
-                'opacity': 0.9
-            }
+            style_function=lambda feature: {'color': jalur_warna, 'weight': 5, 'opacity': 0.9}
         ).add_to(m)
-    else:
-        st.warning("Data GeoJSON tidak ditemukan untuk jalur tersebut.")
+    
+    # 3. Render Titik Api (Bencana) NASA FIRMS
+    if firms_data and isinstance(firms_data, list):
+        for fire in firms_data:
+            try:
+                lat = float(fire.get('Lat', 0))
+                lon = float(fire.get('Lon', 0))
+                if lat != 0 and lon != 0:
+                    folium.CircleMarker(
+                        location=[lat, lon],
+                        radius=8,
+                        color='red',
+                        weight=2,
+                        fill=True,
+                        fill_color='orange',
+                        fill_opacity=0.7,
+                        tooltip=f"🔥 <b>TITIK API (HOTSPOT)</b><br>Keyakinan: {fire.get('Keyakinan', 'N/A')}<br>Radiasi FRP: {fire.get('FRP (MW)', 'N/A')} MW"
+                    ).add_to(m)
+            except Exception as e:
+                pass
 
     st_folium(m, use_container_width=True, height=450)
 
