@@ -344,30 +344,105 @@ if weather_data and "daily" in weather_data:
 # ==========================================
 # 8. TAMPILAN BAWAH: METRIK PERFORMA MODEL ML
 # ==========================================
-st.subheader("🤖 PERFORMA MODEL MACHINE LEARNING (EVALUASI TESTING)")
+st.subheader("🤖 PERFORMA MODEL MACHINE LEARNING (EVALUASI MODEL)")
 
-try:
-    with open("models/model_metrics.json", "r") as f:
-        metrics_data = json.load(f)
-        
-    acc_percent = metrics_data['accuracy'] * 100
-    st.markdown(f"Model **Random Forest Classifier** berhasil dilatih menggunakan dataset historis dengan pembagian **80% Training** dan **20% Testing** secara acak (*randomized*).")
-    
-    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-    col_m1.metric("Akurasi Keseluruhan", f"{acc_percent:.2f}%")
-    col_m2.metric("Total Data", f"{metrics_data['total_data']:,}")
-    col_m3.metric("Data Latih (80%)", f"{metrics_data['train_data']:,}")
-    col_m4.metric("Data Uji (20%)", f"{metrics_data['test_data']:,}")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("##### Detail Laporan Klasifikasi (*Classification Report*)")
-    
-    report_dict = metrics_data['classification_report']
-    if 'accuracy' in report_dict:
-        del report_dict['accuracy']
-        
-    df_report = pd.DataFrame(report_dict).transpose()
-    st.dataframe(df_report.style.format("{:.4f}"), use_container_width=True)
-    
-except FileNotFoundError:
-    st.warning("Data evaluasi belum tersedia. Silakan jalankan `python -m scripts.train_model` terlebih dahulu.")
+metrics_loaded = False
+metrics_data = None
+model_name = "Random Forest Classifier"
+
+# Cari file metrik model terkuat terlebih dahulu (LGBM)
+lgbm_metrics_path = Path("models/lgbm_model_metrics.json")
+rf_metrics_path = Path("models/model_metrics.json")
+
+if lgbm_metrics_path.exists():
+    try:
+        with open(lgbm_metrics_path, "r") as f:
+            metrics_data = json.load(f)
+            model_name = "LightGBM Classifier (Rekomendasi - Ringan & Cepat)"
+            metrics_loaded = True
+    except Exception:
+        pass
+
+if not metrics_loaded and rf_metrics_path.exists():
+    try:
+        with open(rf_metrics_path, "r") as f:
+            metrics_data = json.load(f)
+            # Tentukan algoritma dari file metrik jika ada
+            if isinstance(metrics_data, dict):
+                model_name = metrics_data.get("algorithm", "Random Forest Classifier")
+                if "Classifier" not in model_name:
+                    model_name = f"{model_name} Classifier"
+            metrics_loaded = True
+    except Exception:
+        pass
+
+if metrics_loaded and metrics_data:
+    try:
+        # Cek jika menggunakan skema pembagian temporal 3-split yang baru
+        if isinstance(metrics_data, dict) and metrics_data.get("split_scheme") == "temporal_3split":
+            st.markdown(f"Model **{model_name}** berhasil dilatih menggunakan skema **Temporal 3-Split** "
+                        f"untuk mencegah kebocoran data temporal (*temporal leakage*).")
+            
+            # Buat tab untuk masing-masing split
+            tab_test, tab_val, tab_train = st.tabs([
+                "🎯 Test Set (Evaluasi Akhir 2025)",
+                "📊 Validation Set (Tuning 2024)",
+                "📚 Train Set (Pembelajaran 2021-2023)"
+            ])
+            
+            splits = [
+                ("test_metrics", tab_test, "2025"),
+                ("validation_metrics", tab_val, "2024"),
+                ("train_metrics", tab_train, "2021-2023")
+            ]
+            
+            for key, tab, year_range in splits:
+                with tab:
+                    split_data = metrics_data.get(key, {})
+                    if split_data:
+                        acc_val = split_data.get("accuracy", 0.0) * 100
+                        f1_val = split_data.get("f1_macro", 0.0)
+                        n_samples = split_data.get("n_samples", 0)
+                        
+                        col1, col2, col3 = st.columns(3)
+                        col1.metric("Akurasi", f"{acc_val:.2f}%")
+                        col2.metric("F1-Macro Score", f"{f1_val:.4f}")
+                        col3.metric("Jumlah Sampel", f"{n_samples:,}")
+                        
+                        st.markdown("##### Detail Laporan Klasifikasi (*Classification Report*)")
+                        report_dict = split_data.get("report", {})
+                        
+                        # Buat salinan dan hilangkan metrik akurasi dari baris agar dataframe lebih rapi
+                        report_to_show = dict(report_dict)
+                        if 'accuracy' in report_to_show:
+                            del report_to_show['accuracy']
+                            
+                        df_report = pd.DataFrame(report_to_show).transpose()
+                        st.dataframe(df_report.style.format("{:.4f}"), use_container_width=True)
+                    else:
+                        st.info(f"Data metrik untuk split ini tidak tersedia.")
+        else:
+            # Fallback untuk format lama (Random Split)
+            acc_percent = metrics_data['accuracy'] * 100
+            st.markdown(f"Model **{model_name}** berhasil dilatih menggunakan dataset historis dengan pembagian **80% Training** dan **20% Testing** secara acak (*randomized*).")
+            
+            col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+            col_m1.metric("Akurasi Keseluruhan", f"{acc_percent:.2f}%")
+            col_m2.metric("Total Data", f"{metrics_data['total_data']:,}")
+            col_m3.metric("Data Latih (80%)", f"{metrics_data['train_data']:,}")
+            col_m4.metric("Data Uji (20%)", f"{metrics_data['test_data']:,}")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("##### Detail Laporan Klasifikasi (*Classification Report*)")
+            
+            report_dict = metrics_data['classification_report']
+            if 'accuracy' in report_dict:
+                del report_dict['accuracy']
+                
+            df_report = pd.DataFrame(report_dict).transpose()
+            st.dataframe(df_report.style.format("{:.4f}"), use_container_width=True)
+            
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat memproses data metrik model: {str(e)}")
+else:
+    st.warning("Data evaluasi model belum tersedia. Silakan jalankan training terlebih dahulu.")
