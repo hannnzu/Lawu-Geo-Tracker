@@ -26,6 +26,7 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
     
+    # Menghitung koefisien a dari rumus Haversine menggunakan selisih latitude dan longitude dalam radian.
     a = math.sin(dlat / 2)**2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlon / 2)**2
     c = 2 * math.asin(math.sqrt(a))
     return R * c
@@ -62,14 +63,12 @@ def process_gpx_points(points: list[dict], nama_jalur: str) -> list[dict]:
         logger.warning(f"Daftar titik GPX untuk jalur '{nama_jalur}' kosong.")
         return []
 
-    # Cek deteksi trek terbalik:
-    # Jika elevasi titik awal secara signifikan lebih tinggi dari titik akhir (> 500 meter),
-    # maka trek direkam dari puncak ke basecamp, sehingga perlu kita balikkan urutannya.
+    # Mengecek apakah elevasi awal jauh lebih tinggi dibanding elevasi akhir (indikasi perekaman dari puncak ke basecamp).
     ele_awal = points[0].get("ele", 0.0)
     ele_akhir = points[-1].get("ele", 0.0)
-    
     if ele_awal > ele_akhir + 500.0:
         logger.info(f"Mendeteksi trek terbalik pada '{nama_jalur}' (Awal: {ele_awal}m, Akhir: {ele_akhir}m). Membalikkan urutan titik...")
+        # Membalikkan urutan array koordinat agar berurutan dari basecamp naik ke atas puncak.
         points = list(reversed(points))
 
     processed_points = []
@@ -94,7 +93,7 @@ def process_gpx_points(points: list[dict], nama_jalur: str) -> list[dict]:
             prev_lon = prev_pt["lon"]
             prev_ele = prev_pt.get("ele", 0.0)
 
-            # Hitung jarak segmen (KM)
+            # Menghitung jarak garis lurus di permukaan bumi antar koordinat berurutan.
             jarak_segmen = haversine_distance(prev_lat, prev_lon, lat, lon)
             kumulatif_jarak += jarak_segmen
 
@@ -106,6 +105,7 @@ def process_gpx_points(points: list[dict], nama_jalur: str) -> list[dict]:
             # Hitung kemiringan (%)
             jarak_m = jarak_segmen * 1000.0
             if jarak_m > 0.1:  # Hindari pembagian dengan nol atau angka terlampau kecil akibat GPS noise
+                # Menghitung persentase kemiringan lereng berdasarkan beda tinggi dibagi jarak horizontal.
                 kemiringan = (delta_ele / jarak_m) * 100.0
             else:
                 kemiringan = 0.0

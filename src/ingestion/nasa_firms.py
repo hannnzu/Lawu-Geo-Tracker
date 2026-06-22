@@ -99,6 +99,7 @@ def fetch_fire_batch(map_key: str, start_date: str,
 
     for attempt in range(1, max_retries + 1):
         try:
+            # Melakukan HTTP GET request ke API NASA FIRMS dengan batasan waktu timeout 30 detik.
             resp = requests.get(url, timeout=30)
 
             # 429 Rate limit
@@ -115,7 +116,7 @@ def fetch_fire_batch(map_key: str, start_date: str,
             if not text or text.count("\n") == 0:
                 return []
 
-            # Parse CSV teks
+            # Membaca respons teks CSV dari API secara terstruktur menggunakan dictionary reader.
             reader = csv.DictReader(io.StringIO(text))
             rows = []
             for raw_row in reader:

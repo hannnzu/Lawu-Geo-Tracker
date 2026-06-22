@@ -23,6 +23,7 @@ def parse_gpx(file_path: str | Path) -> list[dict]:
         list[dict]: List titik dengan field: lat, lon, ele, time.
     """
     file_path = Path(file_path)
+    # Membaca dan mem-parse struktur XML dari file GPX mentah.
     tree = ET.parse(file_path)
     root = tree.getroot()
 

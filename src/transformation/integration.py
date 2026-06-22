@@ -37,7 +37,7 @@ def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     dlat = lat2_rad - lat1_rad
     dlon = lon2_rad - lon1_rad
 
-    # Rumus Haversine
+    # Menghitung koefisien a dari rumus Haversine berdasarkan selisih sudut radian antar koordinat.
     a = math.sin(dlat / 2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2)**2
     c = 2 * math.asin(math.sqrt(a))
 
@@ -163,14 +163,14 @@ def integrate_weather_and_disaster(
             # Cari titik api pada tanggal tersebut
             detections = fire_by_date.get(tanggal, [])
             if detections:
-                # Cari jarak terdekat
+                # Mengiterasi seluruh hotspot yang terjadi pada hari yang sama untuk mencari jarak spasial terdekat.
                 for det in detections:
                     dist = haversine_distance(lat_pos, lon_pos, det["lat"], det["lon"])
                     if dist < min_distance:
                         min_distance = dist
                         closest_frp = det["frp"]
 
-                # Cek apakah melampaui ambang batas bahaya
+                # Menentukan status ancaman kebakaran aktif apabila jarak terdekat berada di bawah threshold (3 km).
                 if min_distance <= distance_threshold_km:
                     status_kebakaran = 1
                     fire_relations_count += 1

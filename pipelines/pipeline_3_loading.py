@@ -95,24 +95,32 @@ def run() -> None:
         engine = get_engine(db_url)
         
         logger.info("--- [1/6] Memastikan Skema Database ---")
+        # Membuat skema tabel, tipe data khusus, indeks, dan hypertable TimescaleDB jika belum ada di database cloud.
         ensure_schema(engine)
 
         logger.info("--- [2/6] Memuat Dimensi: Pos Pendakian ---")
+        # Menyisipkan metadata koordinat geografis pos-pos pendakian resmi Gunung Lawu ke tabel dimensi.
         load_pos_pendakian(engine)
 
         logger.info("--- [3/6] Memuat Dimensi: Titik Api ---")
+        # Melakukan load data riwayat hotspot kebakaran hutan dari file CSV lokal ke tabel dimensi Aiven.
         load_titik_api(engine, disaster_csv)
 
         logger.info("--- [4/6] Memuat Dimensi: Jalur Pendakian (GPX) ---")
         with open(gpx_csv, mode='r', encoding='utf-8') as f:
             gpx_data = list(csv.DictReader(f))
+            # Memasukkan titik-titik koordinat urut lintasan pendakian beserta kalkulasi kemiringannya.
             load_jalur_pendakian(engine, gpx_data)
 
         logger.info("--- [5/6] Memuat Fakta: Cuaca & Update Danger Level ---")
+        # Mengunggah dataset fakta cuaca per jam (integrated) ke hypertable TimescaleDB dengan volume besar secara batch.
         load_cuaca_integrated(engine, cuaca_integrated_csv)
+        
+        # Menjalankan kueri SQL GREATEST di sisi server untuk memperbarui kolom danger_level secara efisien dan menghemat bandwidth.
         updated_count = update_danger_level_in_db(engine)
         logger.info(f"Berhasil update {updated_count:,} baris danger_level di server.")
 
+        # Menjalankan kueri validasi (asersi kualitas) untuk memastikan volume data dan integritas level bahaya konsisten.
         run_verification(engine)
 
         logger.info("=" * 60)

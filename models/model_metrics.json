@@ -1,45 +1,196 @@
 {
-    "accuracy": 1.0,
-    "classification_report": {
-        "0": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1-score": 1.0,
-            "support": 58750.0
-        },
-        "1": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1-score": 1.0,
-            "support": 100902.0
-        },
-        "2": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1-score": 1.0,
-            "support": 4905.0
-        },
-        "3": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1-score": 1.0,
-            "support": 1975.0
-        },
+    "split_scheme": "temporal_3split",
+    "train_years": "2021-2023",
+    "validation_year": "2024",
+    "test_year": "2025",
+    "features_used": [
+        "Elevasi (mdpl)",
+        "Lat",
+        "Lon",
+        "Suhu (C)",
+        "Suhu Terasa (C)",
+        "Kelembaban (%)",
+        "Curah Hujan (mm)",
+        "Hujan (mm)",
+        "Kecepatan Angin (km/h)",
+        "Arah Angin (derajat)",
+        "Angin Kencang (km/h)",
+        "Tutupan Awan (%)",
+        "Jarak Pandang (m)",
+        "Tekanan Udara (hPa)",
+        "Kode Cuaca WMO",
+        "Jarak_Titik_Api_Terdekat_KM",
+        "FRP_Terdekat_MW",
+        "bulan_sin",
+        "bulan_cos",
+        "jam_sin",
+        "jam_cos",
+        "doy_sin",
+        "doy_cos",
+        "compound_cold_wind",
+        "fire_proximity_index"
+    ],
+    "features_dropped": [
+        "Status_Kebakaran_Sekitar",
+        "_tahun"
+    ],
+    "train_metrics": {
         "accuracy": 1.0,
-        "macro avg": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1-score": 1.0,
-            "support": 166532.0
-        },
-        "weighted avg": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1-score": 1.0,
-            "support": 166532.0
+        "f1_macro": 1.0,
+        "n_samples": 499320,
+        "report": {
+            "0": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 169113.0
+            },
+            "1": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 304084.0
+            },
+            "2": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 17008.0
+            },
+            "3": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 9115.0
+            },
+            "accuracy": 1.0,
+            "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 499320.0
+            },
+            "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 499320.0
+            }
         }
     },
-    "total_data": 832656,
-    "train_data": 666124,
-    "test_data": 166532
+    "validation_metrics": {
+        "accuracy": 0.999886,
+        "f1_macro": 0.999463,
+        "n_samples": 166896,
+        "report": {
+            "0": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 66722.0
+            },
+            "1": {
+                "precision": 0.999799537882065,
+                "recall": 1.0,
+                "f1-score": 0.9998997588937603,
+                "support": 94762.0
+            },
+            "2": {
+                "precision": 1.0,
+                "recall": 0.9959157351676698,
+                "f1-score": 0.9979536887452881,
+                "support": 4652.0
+            },
+            "3": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 760.0
+            },
+            "accuracy": 0.9998861566484517,
+            "macro avg": {
+                "precision": 0.9999498844705162,
+                "recall": 0.9989789337919175,
+                "f1-score": 0.9994633619097621,
+                "support": 166896.0
+            },
+            "weighted avg": {
+                "precision": 0.999886179469731,
+                "recall": 0.9998861566484517,
+                "f1-score": 0.9998860458748777,
+                "support": 166896.0
+            }
+        }
+    },
+    "test_metrics": {
+        "accuracy": 1.0,
+        "f1_macro": 1.0,
+        "n_samples": 166440,
+        "report": {
+            "0": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 57636.0
+            },
+            "1": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 105494.0
+            },
+            "2": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 3063.0
+            },
+            "3": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 247.0
+            },
+            "accuracy": 1.0,
+            "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 166440.0
+            },
+            "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 166440.0
+            }
+        }
+    },
+    "feature_importances": {
+        "Angin Kencang (km/h)": 0.378194,
+        "Jarak_Titik_Api_Terdekat_KM": 0.068113,
+        "Arah Angin (derajat)": 0.068086,
+        "Kode Cuaca WMO": 0.061542,
+        "Hujan (mm)": 0.052488,
+        "Kecepatan Angin (km/h)": 0.049664,
+        "Suhu Terasa (C)": 0.046821,
+        "Curah Hujan (mm)": 0.041898,
+        "compound_cold_wind": 0.041376,
+        "fire_proximity_index": 0.037754,
+        "Suhu (C)": 0.031732,
+        "doy_cos": 0.025464,
+        "FRP_Terdekat_MW": 0.024004,
+        "doy_sin": 0.021691,
+        "bulan_cos": 0.010961,
+        "Tekanan Udara (hPa)": 0.009052,
+        "bulan_sin": 0.008355,
+        "Kelembaban (%)": 0.005404,
+        "jam_cos": 0.004936,
+        "Elevasi (mdpl)": 0.004513,
+        "Tutupan Awan (%)": 0.002745,
+        "jam_sin": 0.002487,
+        "Lon": 0.001534,
+        "Lat": 0.001184,
+        "Jarak Pandang (m)": 0.0
+    }
 }

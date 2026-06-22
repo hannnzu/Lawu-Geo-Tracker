@@ -37,10 +37,14 @@ def ingest_disaster() -> None:
     START_DATE, END_DATE = Config.FIRMS_START_DATE, Config.FIRMS_END_DATE
     OUTPUT_CSV = Config.DATA_RAW_DIR / "disaster" / f"titik_api_lawu_{START_DATE[:4]}_{END_DATE[:4]}.csv"
     
+    # Melakukan pengecekan data lokal terakhir untuk menghindari penarikan data duplikat (fitur resume).
     last_date = get_last_saved_date(OUTPUT_CSV)
+    
+    # Memulai penarikan data hotspot kebakaran hutan secara berkala dari NASA FIRMS API.
     all_rows = fetch_all_fire_data(MAP_KEY, START_DATE, END_DATE, resume_from=last_date, delay_sec=1.0)
     
     if all_rows:
+        # Menyimpan data baru dengan mode append ('a') agar data lama tetap utuh.
         save_firms(all_rows, OUTPUT_CSV, mode="a")
         logger.info(f"Berhasil menyimpan {len(all_rows)} baris data titik api ke {OUTPUT_CSV.name}")
     else:
@@ -62,10 +66,14 @@ def ingest_weather() -> None:
     START_DATE, END_DATE = Config.WEATHER_HISTORICAL_START, Config.WEATHER_HISTORICAL_END
     OUTPUT_CSV = Config.DATA_PROC_DIR / "weather" / f"cuaca_hourly_lawu_{START_DATE[:4]}_{END_DATE[:4]}.csv"
 
+    # Memeriksa pos pendakian mana saja yang datanya sudah berhasil ditarik sebelumnya di lokal.
     existing = get_existing_locations(OUTPUT_CSV)
+    
+    # Melakukan request API cuaca historis Open-Meteo per jam dengan jeda waktu 3.0 detik agar tidak diblokir API.
     all_rows, failed = fetch_all_locations(START_DATE, END_DATE, delay_sec=3.0, skip_existing=existing)
     
     if all_rows:
+        # Menyimpan dataset cuaca baru hasil ekstraksi ke format CSV lokal.
         save_meteo(all_rows, OUTPUT_CSV, mode="a")
         logger.info(f"Berhasil menyimpan {len(all_rows):,} baris cuaca ke {OUTPUT_CSV.name}")
     else:
@@ -87,8 +95,13 @@ def ingest_osm() -> None:
     """
     logger.info("\n--- [3/3] EXTRACT: OPENSTREETMAP (JALUR OSM) ---")
     OUTPUT_GEOJSON = Config.DATA_PROC_DIR / "geospatial" / "jalur_lawu_osm.geojson"
+    # Mengirimkan query spasial Overpass API untuk mendownload rute jalan/lintasan di sekitar Lawu.
     osm_data = fetch_trails_osm()
+    
+    # Mengubah data nodes dan ways OSM mentah ke representasi spasial terstandar GeoJSON.
     geojson = osm_to_geojson(osm_data)
+    
+    # Menyimpan koordinat spasial lintasan (highway=path) Gunung Lawu ke file GeoJSON lokal.
     save_geojson(geojson, OUTPUT_GEOJSON)
     logger.info(f"Berhasil menyimpan {len(geojson['features'])} feature GeoJSON ke {OUTPUT_GEOJSON.name}")
 

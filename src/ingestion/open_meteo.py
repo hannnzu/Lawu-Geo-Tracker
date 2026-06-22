@@ -242,6 +242,7 @@ def fetch_historical_weather(lat: float, lon: float,
     }
 
     for attempt in range(1, max_retries + 1):
+        # Mengirim HTTP GET request ke Open-Meteo Archive API untuk mengambil data cuaca historis.
         response = requests.get(BASE_URL, params=params, timeout=60)
 
         if response.status_code == 429:
@@ -399,6 +400,7 @@ def save_to_csv(rows: list[dict], output_path: str | Path,
     file_baru = not output_path.exists() or mode == "w"
 
     with open(output_path, mode=mode, newline="", encoding="utf-8") as f:
+        # Menyimpan data cuaca ke file CSV lokal dengan menyisipkan baris secara berkala.
         writer = csv.DictWriter(f, fieldnames=CSV_HEADER)
         if file_baru:
             writer.writeheader()

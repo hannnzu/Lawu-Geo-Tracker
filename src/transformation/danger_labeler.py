@@ -61,7 +61,7 @@ def hitung_danger_level(
     # Jika ada titik api aktif dalam jarak kurang dari 1.0 KM, status DILARANG.
     r7 = 3 if jarak_titik_api_terdekat_km < 1.0 else 0
 
-    # Ambil nilai maksimum dari seluruh aturan bahaya
+    # Mengambil tingkat bahaya tertinggi dari hasil evaluasi seluruh parameter aturan (worst-case scenario).
     return max(r1, r2, r3, r4, r5, r6, r7)
 
 

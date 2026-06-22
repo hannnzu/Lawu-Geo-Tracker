@@ -49,6 +49,7 @@ def transform_integration_and_danger_level() -> None:
 
     # 1. Integrasi Cuaca & Bencana
     logger.info("Melakukan integrasi spatiotemporal (Jarak Threshold: 3.0 KM)...")
+    # Mengintegrasikan data cuaca dan titik api secara spatiotemporal berdasarkan tanggal dan jarak terdekat (< 3km).
     success = integrate_weather_and_disaster(weather_csv, disaster_csv, curated_csv, distance_threshold_km=3.0)
     
     if not success or not curated_csv.exists():
@@ -72,6 +73,7 @@ def transform_integration_and_danger_level() -> None:
         writer.writeheader()
         
         for row in reader:
+            # Menghitung kelas bahaya kebakaran hutan (danger level) lokal secara baris demi baris menggunakan aturan bisnis.
             danger_val = hitung_danger_level_dari_row_csv(row)
             row["Danger_Level"] = danger_val
             class_distribution[danger_val] += 1
@@ -114,7 +116,10 @@ def transform_gpx() -> None:
     for item in gpx_files:
         file_path = gpx_dir / item["filename"]
         if file_path.exists():
+            # Mengekstrak metadata trek koordinat (lat, lon, elevasi) dari file format GPX.
             raw_points = parse_gpx(file_path)
+            
+            # Memproses dan menghitung parameter kemiringan rute, elevasi, jarak tempuh, dan tipe medan.
             all_points.extend(process_gpx_points(raw_points, item["nama_jalur"]))
 
     if all_points:

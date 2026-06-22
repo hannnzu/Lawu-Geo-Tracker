@@ -1,0 +1,179 @@
+{
+    "algorithm": "LightGBM",
+    "split_scheme": "temporal_3split",
+    "best_iteration": 227,
+    "lgbm_params": {
+        "objective": "multiclass",
+        "num_class": 4,
+        "metric": "multi_logloss",
+        "num_leaves": 63,
+        "learning_rate": 0.05,
+        "n_estimators": 1000,
+        "class_weight": "balanced",
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "min_child_samples": 20,
+        "random_state": 42,
+        "n_jobs": -1,
+        "verbose": -1
+    },
+    "train_metrics": {
+        "accuracy": 1.0,
+        "f1_macro": 1.0,
+        "n_samples": 499320,
+        "report": {
+            "0": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 169113.0
+            },
+            "1": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 304084.0
+            },
+            "2": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 17008.0
+            },
+            "3": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 9115.0
+            },
+            "accuracy": 1.0,
+            "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 499320.0
+            },
+            "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 499320.0
+            }
+        }
+    },
+    "validation_metrics": {
+        "accuracy": 1.0,
+        "f1_macro": 1.0,
+        "n_samples": 166896,
+        "report": {
+            "0": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 66722.0
+            },
+            "1": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 94762.0
+            },
+            "2": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 4652.0
+            },
+            "3": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 760.0
+            },
+            "accuracy": 1.0,
+            "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 166896.0
+            },
+            "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 166896.0
+            }
+        }
+    },
+    "test_metrics": {
+        "accuracy": 1.0,
+        "f1_macro": 1.0,
+        "n_samples": 166440,
+        "report": {
+            "0": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 57636.0
+            },
+            "1": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 105494.0
+            },
+            "2": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 3063.0
+            },
+            "3": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 247.0
+            },
+            "accuracy": 1.0,
+            "macro avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 166440.0
+            },
+            "weighted avg": {
+                "precision": 1.0,
+                "recall": 1.0,
+                "f1-score": 1.0,
+                "support": 166440.0
+            }
+        }
+    },
+    "feature_importances": {
+        "Angin Kencang (km/h)": 8263,
+        "Kecepatan Angin (km/h)": 7163,
+        "Arah Angin (derajat)": 5859,
+        "Suhu Terasa (C)": 4563,
+        "compound_cold_wind": 4308,
+        "doy_cos": 3510,
+        "doy_sin": 3241,
+        "Suhu (C)": 3023,
+        "Curah Hujan (mm)": 2504,
+        "Kelembaban (%)": 2429,
+        "Jarak_Titik_Api_Terdekat_KM": 1735,
+        "jam_cos": 1419,
+        "jam_sin": 1371,
+        "fire_proximity_index": 1310,
+        "FRP_Terdekat_MW": 826,
+        "bulan_sin": 770,
+        "Tekanan Udara (hPa)": 669,
+        "Tutupan Awan (%)": 622,
+        "Hujan (mm)": 537,
+        "bulan_cos": 468,
+        "Elevasi (mdpl)": 346,
+        "Lat": 280,
+        "Kode Cuaca WMO": 103,
+        "Lon": 92,
+        "Jarak Pandang (m)": 0
+    }
+}

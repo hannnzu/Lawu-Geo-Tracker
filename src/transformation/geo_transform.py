@@ -19,6 +19,7 @@ def gpx_points_to_geojson(points: list[dict], route_name: str = "Unknown") -> di
     Returns:
         dict: GeoJSON Feature dengan geometry LineString.
     """
+    # Menyusun ulang pasangan koordinat menjadi format [longitude, latitude, elevasi] standar spesifikasi GeoJSON.
     coordinates = [
         [p["lon"], p["lat"], p.get("ele", 0)]
         for p in points

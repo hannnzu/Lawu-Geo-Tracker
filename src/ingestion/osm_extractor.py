@@ -57,6 +57,7 @@ def fetch_trails_osm(bbox: tuple = LAWU_BBOX,
     }
     
     # 2. Sisipkan parameter headers ke dalam requests.post
+    # Mengirim HTTP POST request ke Overpass API untuk mengambil data lintasan jalan setapak (path).
     response = requests.post(
         OVERPASS_URL, 
         data={"data": query}, 
@@ -109,5 +110,6 @@ def save_geojson(geojson: dict, output_path: str | Path) -> None:
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
+        # Menulis seluruh dataset rute spasial berformat GeoJSON ke file lokal.
         json.dump(geojson, f, indent=2, ensure_ascii=False)
     print(f"GeoJSON tersimpan: {output_path}")

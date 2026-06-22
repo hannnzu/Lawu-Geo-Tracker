@@ -46,11 +46,13 @@ def ensure_schema(engine) -> None:
     with engine.connect() as conn:
         # 1. Pastikan ekstensi TimescaleDB aktif
         logger.info("Memastikan ekstensi timescaledb telah aktif...")
+        # Mengaktifkan ekstensi TimescaleDB di database PostgreSQL agar mendukung hypertable berbasis waktu.
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;"))
         conn.commit()
 
         # 2. Buat tabel pos_pendakian
         logger.info("Membuat tabel 'pos_pendakian' jika belum ada...")
+        # Membuat tabel skema pos_pendakian sebagai tabel dimensi statis untuk koordinat basecamp/pos.
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS pos_pendakian (
                 nama_pos     VARCHAR(100) PRIMARY KEY,
@@ -64,6 +66,7 @@ def ensure_schema(engine) -> None:
 
         # 3. Buat tabel titik_api
         logger.info("Membuat tabel 'titik_api' jika belum ada...")
+        # Membuat tabel skema titik_api untuk menampung riwayat deteksi hotspot dari satelit NASA.
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS titik_api (
                 id            SERIAL PRIMARY KEY,
@@ -85,6 +88,7 @@ def ensure_schema(engine) -> None:
 
         # 4. Buat tabel jalur_pendakian
         logger.info("Membuat tabel 'jalur_pendakian' jika belum ada...")
+        # Membuat tabel skema jalur_pendakian untuk menyimpan rincian koordinat spasial lintasan GPX.
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS jalur_pendakian (
                 id              SERIAL PRIMARY KEY,
@@ -105,6 +109,7 @@ def ensure_schema(engine) -> None:
 
         # 5. Buat tabel cuaca_integrated
         logger.info("Membuat tabel 'cuaca_integrated' jika belum ada...")
+        # Membuat tabel skema cuaca_integrated sebagai tabel fakta gabungan cuaca dan status kebakaran.
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS cuaca_integrated (
                 timestamp                     TIMESTAMPTZ     NOT NULL,
@@ -146,6 +151,7 @@ def ensure_schema(engine) -> None:
 
         if not res:
             logger.info("Mengubah 'cuaca_integrated' menjadi TimescaleDB hypertable (interval 1 bulan)...")
+            # Mengubah tabel fakta cuaca menjadi hypertable TimescaleDB untuk optimasi penyimpanan data berbasis waktu.
             conn.execute(text(
                 "SELECT create_hypertable('cuaca_integrated', 'timestamp', chunk_time_interval => INTERVAL '1 month');"
             ))
@@ -190,6 +196,7 @@ def load_pos_pendakian(engine) -> int:
 
     with engine.connect() as conn:
         for lokasi in LOKASI_GUNUNG_LAWU:
+            # Menyisipkan atau memperbarui data koordinat geografis pos resmi ke database.
             conn.execute(query, {
                 "nama_pos": lokasi["nama_pos"],
                 "jalur": lokasi["jalur"],
@@ -222,6 +229,7 @@ def load_titik_api(engine, csv_path: Path) -> int:
 
     logger.info(f"Menghapus data lama di 'titik_api'...")
     with engine.connect() as conn:
+        # Mengosongkan data lama di tabel titik_api untuk mencegah tumpang tindih saat pemuatan ulang.
         conn.execute(text("TRUNCATE TABLE titik_api RESTART IDENTITY CASCADE;"))
         conn.commit()
 
@@ -242,6 +250,7 @@ def load_titik_api(engine, csv_path: Path) -> int:
                 ) FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '');
             """
             with open(csv_path, mode="r", encoding="utf-8") as f:
+                # Memuat seluruh data dari CSV lokal langsung ke tabel database menggunakan fitur COPY.
                 cur.copy_expert(sql=copy_sql, file=f)
         raw_conn.commit()
     except Exception as e:
@@ -274,6 +283,7 @@ def load_cuaca_integrated(engine, csv_path: Path) -> int:
 
     logger.info(f"Menghapus data lama di 'cuaca_integrated'...")
     with engine.connect() as conn:
+        # Mengosongkan tabel fakta cuaca sebelum mengunggah dataset berukuran besar yang baru.
         conn.execute(text("TRUNCATE TABLE cuaca_integrated CASCADE;"))
         conn.commit()
 
@@ -296,6 +306,7 @@ def load_cuaca_integrated(engine, csv_path: Path) -> int:
                 ) FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '');
             """
             with open(csv_path, mode="r", encoding="utf-8") as f:
+                # Mengunggah data cuaca per jam terintegrasi secara cepat via protokol PostgreSQL COPY.
                 cur.copy_expert(sql=copy_sql, file=f)
         raw_conn.commit()
     except Exception as e:
@@ -317,6 +328,7 @@ def load_jalur_pendakian(engine, points: list[dict]) -> int:
     """
     logger.info("Menghapus data lama di 'jalur_pendakian'...")
     with engine.connect() as conn:
+        # Mengosongkan tabel jalur pendakian lama sebelum memuat lintasan GPX terbaru.
         conn.execute(text("TRUNCATE TABLE jalur_pendakian RESTART IDENTITY CASCADE;"))
         conn.commit()
 
@@ -364,6 +376,7 @@ def load_jalur_pendakian(engine, points: list[dict]) -> int:
                     sumber_file, terrain_type
                 ) FROM STDIN WITH (FORMAT CSV, HEADER TRUE, NULL '');
             """
+            # Menyalin seluruh titik rute GPX dalam memori langsung ke database cloud.
             cur.copy_expert(sql=copy_sql, file=f)
         raw_conn.commit()
     except Exception as e:
@@ -435,6 +448,7 @@ def update_danger_level_in_db(engine) -> int:
     """)
     
     with engine.connect() as conn:
+        # Mengeksekusi query SQL UPDATE terpadu di server Aiven untuk melabeli tingkat bahaya secara instan.
         res = conn.execute(query)
         conn.commit()
         row_count = res.rowcount
