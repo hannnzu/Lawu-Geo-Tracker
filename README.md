@@ -24,9 +24,11 @@ Proyek ini menggunakan pendekatan arsitektur **3 Tahap Utama ETL** untuk memperm
    * Melakukan verifikasi integritas data (*Server-side validation*).
 
 ## 🤖 Pemodelan Machine Learning
-Setelah data dimuat, model **Random Forest Classifier** dilatih untuk memprediksi *Danger Level*.
-* **Data Splitting**: Pengacakan otomatis dengan proporsi **80% Data Latih (Training)** dan **20% Data Uji (Testing)** menggunakan Scikit-Learn.
-* Model disimpan dalam format `.joblib` untuk keperluan *deployment* pada *dashboard* atau aplikasi.
+Proyek ini menggunakan model **LightGBM Classifier** (dengan Random Forest sebagai baseline) untuk memprediksi tingkat bahaya (*Danger Level*).
+* **Data Splitting**: Menggunakan skema **Temporal 3-Split** (Train: 2021-2023, Validation: 2024, Test: 2025) untuk mengantisipasi *temporal leakage*.
+* **Kelebihan LightGBM**: Ukuran model jauh lebih kecil (~6.11 MB vs RF ~28.35 MB) yang mempermudah deployment, serta proses training yang jauh lebih cepat.
+* **Explainability (SHAP)**: Dilengkapi audit transparansi menggunakan SHAP (SHapley Additive exPlanations) untuk membedah kontribusi fisis dari parameter cuaca dan kebencanaan secara global maupun lokal.
+* Model disimpan dalam format `.joblib` di folder `models/` untuk digunakan oleh dashboard.
 
 ## 🛠️ Teknologi yang Digunakan
 * **Bahasa Pemrograman**: Python 3.9+
