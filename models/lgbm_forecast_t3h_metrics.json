@@ -1,0 +1,234 @@
+{
+    "algorithm": "LightGBM Forecasting",
+    "horizon_hours": 3,
+    "split_scheme": "temporal_3split",
+    "best_iteration": 658,
+    "lgbm_params": {
+        "objective": "multiclass",
+        "num_class": 4,
+        "metric": "multi_logloss",
+        "num_leaves": 31,
+        "max_depth": 8,
+        "learning_rate": 0.03,
+        "n_estimators": 2000,
+        "class_weight": "balanced",
+        "subsample": 0.7,
+        "colsample_bytree": 0.7,
+        "reg_alpha": 0.1,
+        "reg_lambda": 0.1,
+        "min_child_samples": 50,
+        "random_state": 42,
+        "n_jobs": -1,
+        "verbose": -1
+    },
+    "train_metrics": {
+        "accuracy": 0.895416,
+        "f1_macro": 0.926075,
+        "recall_level3": 1.0,
+        "n_samples": 499263,
+        "report": {
+            "0": {
+                "precision": 0.7993267749913464,
+                "recall": 0.942108935244312,
+                "f1-score": 0.8648644247653114,
+                "support": 169128.0
+            },
+            "1": {
+                "precision": 0.9640713045849718,
+                "recall": 0.8604726129231741,
+                "f1-score": 0.9093307610084209,
+                "support": 304012.0
+            },
+            "2": {
+                "precision": 0.8767985147748956,
+                "recall": 0.9996472248353716,
+                "f1-score": 0.934201489051897,
+                "support": 17008.0
+            },
+            "3": {
+                "precision": 0.9918389553862894,
+                "recall": 1.0,
+                "f1-score": 0.9959027588090685,
+                "support": 9115.0
+            },
+            "accuracy": 0.895415842952512,
+            "macro avg": {
+                "precision": 0.9080088874343759,
+                "recall": 0.9505571932507144,
+                "f1-score": 0.9260748584086745,
+                "support": 499263.0
+            },
+            "weighted avg": {
+                "precision": 0.9057971158845344,
+                "recall": 0.895415842952512,
+                "f1-score": 0.8966953415729565,
+                "support": 499263.0
+            }
+        }
+    },
+    "validation_metrics": {
+        "accuracy": 0.783955,
+        "f1_macro": 0.701949,
+        "recall_level3": 0.6,
+        "n_samples": 166896,
+        "report": {
+            "0": {
+                "precision": 0.7274171288701403,
+                "recall": 0.8380709517737943,
+                "f1-score": 0.7788333530818075,
+                "support": 66665.0
+            },
+            "1": {
+                "precision": 0.8553392698557473,
+                "recall": 0.7516636960946645,
+                "f1-score": 0.8001571753346992,
+                "support": 94819.0
+            },
+            "2": {
+                "precision": 0.5346420323325635,
+                "recall": 0.6966895958727429,
+                "f1-score": 0.6050028000746687,
+                "support": 4652.0
+            },
+            "3": {
+                "precision": 0.6495726495726496,
+                "recall": 0.6,
+                "f1-score": 0.6238030095759234,
+                "support": 760.0
+            },
+            "accuracy": 0.7839552775381076,
+            "macro avg": {
+                "precision": 0.6917427701577752,
+                "recall": 0.7216060609353004,
+                "f1-score": 0.7019490845167746,
+                "support": 166896.0
+            },
+            "weighted avg": {
+                "precision": 0.7943659948271156,
+                "recall": 0.7839552775381076,
+                "f1-score": 0.7853968459668571,
+                "support": 166896.0
+            }
+        }
+    },
+    "test_metrics": {
+        "accuracy": 0.779316,
+        "f1_macro": 0.600032,
+        "recall_level3": 0.384615,
+        "n_samples": 166383,
+        "report": {
+            "0": {
+                "precision": 0.6749538926242721,
+                "recall": 0.8064057186480672,
+                "f1-score": 0.7348474667383417,
+                "support": 57636.0
+            },
+            "1": {
+                "precision": 0.869787370788924,
+                "recall": 0.7701186490510922,
+                "f1-score": 0.8169242223027083,
+                "support": 105437.0
+            },
+            "2": {
+                "precision": 0.5023885350318471,
+                "recall": 0.6180215475024485,
+                "f1-score": 0.554238032498902,
+                "support": 3063.0
+            },
+            "3": {
+                "precision": 0.23809523809523808,
+                "recall": 0.38461538461538464,
+                "f1-score": 0.29411764705882354,
+                "support": 247.0
+            },
+            "accuracy": 0.7793163965068547,
+            "macro avg": {
+                "precision": 0.5713062591350704,
+                "recall": 0.6447903249542482,
+                "f1-score": 0.6000318421496939,
+                "support": 166383.0
+            },
+            "weighted avg": {
+                "precision": 0.7945946351236387,
+                "recall": 0.7793163965068547,
+                "f1-score": 0.782880378237136,
+                "support": 166383.0
+            }
+        }
+    },
+    "feature_importances": {
+        "doy_sin": 3840,
+        "Angin Kencang (km/h)": 3825,
+        "doy_cos": 3643,
+        "Arah Angin (derajat)": 3295,
+        "Angin Kencang (km/h)_roll_max_12h": 3040,
+        "jam_sin": 2841,
+        "Kecepatan Angin (km/h)": 2801,
+        "Curah Hujan (mm)_roll_mean_12h": 2609,
+        "Angin Kencang (km/h)_lag_6h": 2511,
+        "delta_suhu_terasa_3h": 2495,
+        "delta_angin_kencang_3h": 2466,
+        "Kelembaban (%)": 2422,
+        "jam_cos": 2418,
+        "Kecepatan Angin (km/h)_lag_6h": 2391,
+        "Angin Kencang (km/h)_roll_mean_12h": 2360,
+        "Kecepatan Angin (km/h)_lag_1h": 2237,
+        "Kecepatan Angin (km/h)_lag_3h": 2046,
+        "Angin Kencang (km/h)_roll_max_6h": 2034,
+        "Angin Kencang (km/h)_lag_1h": 2018,
+        "Curah Hujan (mm)_roll_mean_6h": 1884,
+        "Curah Hujan (mm)_roll_max_12h": 1761,
+        "Angin Kencang (km/h)_lag_3h": 1720,
+        "Angin Kencang (km/h)_roll_mean_6h": 1553,
+        "delta_curah_hujan_3h": 1524,
+        "Angin Kencang (km/h)_roll_max_3h": 1421,
+        "Angin Kencang (km/h)_roll_mean_3h": 1363,
+        "Curah Hujan (mm)_roll_mean_3h": 1289,
+        "Curah Hujan (mm)": 1196,
+        "Tutupan Awan (%)": 1139,
+        "Jarak_Titik_Api_Terdekat_KM": 1090,
+        "Curah Hujan (mm)_roll_max_6h": 965,
+        "Curah Hujan (mm)_lag_6h": 945,
+        "Suhu Terasa (C)": 874,
+        "Curah Hujan (mm)_lag_1h": 833,
+        "Curah Hujan (mm)_roll_max_3h": 799,
+        "Curah Hujan (mm)_lag_3h": 765,
+        "bulan_sin": 697,
+        "Suhu (C)": 573,
+        "bulan_cos": 529,
+        "Tekanan Udara (hPa)": 490,
+        "fire_proximity_index": 449,
+        "Suhu Terasa (C)_roll_max_12h": 411,
+        "Hujan (mm)": 348,
+        "compound_cold_wind": 298,
+        "Kode Cuaca WMO_lag_6h": 297,
+        "Kode Cuaca WMO_lag_3h": 263,
+        "FRP_Terdekat_MW": 228,
+        "Suhu Terasa (C)_roll_mean_12h": 218,
+        "Kode Cuaca WMO_lag_1h": 215,
+        "Suhu Terasa (C)_lag_1h": 175,
+        "Suhu Terasa (C)_roll_max_6h": 167,
+        "Lat": 140,
+        "Kode Cuaca WMO": 129,
+        "Elevasi (mdpl)": 124,
+        "Suhu Terasa (C)_lag_6h": 106,
+        "Suhu Terasa (C)_roll_mean_3h": 86,
+        "Suhu Terasa (C)_lag_3h": 85,
+        "Suhu Terasa (C)_roll_max_3h": 85,
+        "Suhu Terasa (C)_roll_mean_6h": 70,
+        "Lon": 36,
+        "Jarak Pandang (m)": 0
+    },
+    "top10_features": [
+        "doy_sin",
+        "Angin Kencang (km/h)",
+        "doy_cos",
+        "Arah Angin (derajat)",
+        "Angin Kencang (km/h)_roll_max_12h",
+        "jam_sin",
+        "Kecepatan Angin (km/h)",
+        "Curah Hujan (mm)_roll_mean_12h",
+        "Angin Kencang (km/h)_lag_6h",
+        "delta_suhu_terasa_3h"
+    ]
+}
