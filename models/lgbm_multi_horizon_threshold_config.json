@@ -1,0 +1,20 @@
+{
+    "t1h": {
+        "model_file": "lgbm_forecast_t1h_model.joblib",
+        "optimal_threshold_level3": 0.23,
+        "tuned_on": "validation_set_2024",
+        "test_set_2025_recall_l3": 0.6923
+    },
+    "t3h": {
+        "model_file": "lgbm_forecast_t3h_model.joblib",
+        "optimal_threshold_level3": 0.060000000000000005,
+        "tuned_on": "validation_set_2024",
+        "test_set_2025_recall_l3": 0.8016
+    },
+    "t6h": {
+        "model_file": "lgbm_forecast_t6h_model.joblib",
+        "optimal_threshold_level3": 0.01,
+        "tuned_on": "validation_set_2024",
+        "test_set_2025_recall_l3": 0.6923
+    }
+}
